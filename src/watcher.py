@@ -66,9 +66,9 @@ class Watcher:
         """
         Looks up doll information
         """
-        doll_info = self.responder.get_doll_data(doll_name)
+        doll = self.responder.get_doll_data(doll_name)
 
-        await ctx.send(doll_info)
+        await ctx.send("Doll information found!")
 
 
     def run(self):

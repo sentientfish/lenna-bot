@@ -1,11 +1,33 @@
 """
-Doll class definition
+Doll class
+
+Takes a wikitext and parses it into information of interest
+This includes:
+- fullName          -> renamed to full_name
+- role
+- rarity
+- affiliation
+- favweapon         -> renamed to weapon_name
+- imprint           -> renamed to signature_weapon
+- wepweakness       -> renamed to weapon_weakness
+- phaseweakness     -> renamed to phase_weakness
+- GFL               -> renamed to gfl_name
+- Node*             -> collected into a list named nodes
+- skills            -> TODO: do it
 """
 
-import mwparserfromhell
+import mwparserfromhell as mwp
 
 class Doll:
+    """
+    Doll class definition
+    """
+
     class Node:
+        """
+        Internal node class representation
+        """
+
         def __init__(self, name, desc, position):
             self.name = name
             self.desc = desc
@@ -29,6 +51,10 @@ class Doll:
 
 
     def _get_node(self, template, node_position, is_key=False, key_position=0):
+        """
+        Internal function to get node from wikitext template
+        """
+
         name = None
         if is_key:
             name_string = f"Node{node_position}name"
@@ -50,6 +76,10 @@ class Doll:
 
 
     def _get_nodes(self, template):
+        """
+        Internal function to get all doll nodes
+        """
+
         nodes = [
             self._get_node(template, 1),
             self._get_node(template, 2),
@@ -71,8 +101,16 @@ class Doll:
 
 
     def _get_base_template(self, wikitext):
-        return mwparserfromhell.parse(wikitext).filter_templates()[0]
+        """
+        Internal function to get the base template of a wikitext
+        """
+
+        return mwp.parse(wikitext).filter_templates()[0]
 
 
     def _get_template_param_value(self, template, param_name):
+        """
+        Internal function to get the value of a parameter 
+        """
+        
         return template.get(param_name).value
