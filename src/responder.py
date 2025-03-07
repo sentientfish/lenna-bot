@@ -4,12 +4,13 @@ Lenna's Response Handler
 Takes user message and prepares the appropriate response
 """
 
+import os
 import json
 
 from typing import TypedDict
 
-
-MEDIA_FILE = "../data/media.json"
+DATA_DIRECTORY = "../data/"
+MEDIA_FILE = "media.json"
 
 
 class InvalidMediaException(Exception):
@@ -29,17 +30,6 @@ class Responder:
         self.media_dict = self._load_media()
 
 
-    def _load_media(self):
-        """
-        Internal function to load the media dictionary
-        """
-
-        with open(MEDIA_FILE, "r") as media_file:
-            media_dict: Media = json.load(media_file)
-
-            return media_dict
-
-
     def get_media(self, media_name):
         """
         Function to fetch the media needed
@@ -50,3 +40,48 @@ class Responder:
             raise InvalidMediaException(f"Media name \"{media_name}\" is not part of any known media!")
 
         return media_link
+
+
+    def get_doll_data(self, doll_name):
+        """
+        Function to fetch doll information
+        """
+
+        doll_json_path = f"{DATA_DIRECTORY}{doll_name}.json"
+        if not os.path.exists(doll_json_path):
+            print("Still in development")
+
+        # TODO: Implement the query method
+        self._query_wiki(doll_name)
+
+        with open(doll_json_path, "r", encoding="utf8") as doll_json_file:
+            doll_json = json.load(doll_json_file)
+
+            doll_info = self._parse_json(doll_json)
+        
+        return doll_info
+
+    def _load_media(self):
+        """
+        Internal function to load the media dictionary
+        """
+
+        with open(f"{DATA_DIRECTORY}{MEDIA_FILE}", "r") as media_file:
+            media_dict: Media = json.load(media_file)
+
+            return media_dict
+
+
+    def _parse_json(self, doll_json):
+        """
+        Internal function to parse the loaded json
+        """
+        
+        return doll_json
+
+
+    def _query_wiki(self, doll_name):
+        """
+        Internal function to query the wiki for doll info
+        """
+        pass

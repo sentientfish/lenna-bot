@@ -1,10 +1,6 @@
 import os
-import json
 
 from dotenv import load_dotenv
-from discord import (
-    Intents,
-)
 
 from watcher import Watcher
 

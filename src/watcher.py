@@ -27,6 +27,8 @@ class Watcher:
         self.intents.message_content = True
         self.bot = commands.Bot(command_prefix=cmd_prefix, intents=self.intents)
 
+        self.bot.event(self._on_ready)
+
         self._add_command("bingo", Watcher.bingo)
         self._add_command("echo", Watcher.echo)
         self._add_command("lookup", Watcher.lookup)
@@ -39,6 +41,10 @@ class Watcher:
                 add-commands-to-a-class-discord-py
         """
         self.bot.command(name=name)(wraps(func)(partial(func, self)))
+
+
+    async def _on_ready(self):
+        print(f"Lenna logged in as user: {self.bot.user}")
 
 
     async def bingo(self, ctx):
@@ -60,8 +66,9 @@ class Watcher:
         """
         Looks up doll information
         """
-        pass
+        doll_info = self.responder.get_doll_data(doll_name)
 
+        await ctx.send(doll_info)
 
 
     def run(self):
