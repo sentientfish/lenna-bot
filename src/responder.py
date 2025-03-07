@@ -8,10 +8,16 @@ import os
 import json
 
 from typing import TypedDict
+from doll import Doll
 
 DATA_DIRECTORY = "../data/"
 MEDIA_FILE = "media.json"
 
+# Parsing variables
+DATA_STRING = "data"
+PARSE_STRING = "parse"
+WIKITEXT_STRING = "wikitext"
+STAR_STRING = "*"
 
 class InvalidMediaException(Exception):
     pass
@@ -57,9 +63,12 @@ class Responder:
         with open(doll_json_path, "r", encoding="utf8") as doll_json_file:
             doll_json = json.load(doll_json_file)
 
-            doll_info = self._parse_json(doll_json)
+            doll_data = self._parse_json(doll_json)[DATA_STRING][PARSE_STRING]
+            doll_wikitext = doll_data[WIKITEXT_STRING][STAR_STRING]
+
+            doll = Doll(doll_wikitext)
         
-        return doll_info
+        return doll
 
     def _load_media(self):
         """
