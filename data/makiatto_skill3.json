@@ -1,0 +1,10 @@
+{
+    "parse": {
+        "title":"Makiatto/skill3data",
+        "pageid":62756,
+        "redirects":[],
+        "wikitext": {
+            "*": "{| class=gf-table\n! name\n| colspan=10 | Professional Tactics\n|-\n! icon\n| colspan=10 | Skill_MacqiatoSSR_Active_2\n|-\n! text\n| colspan=10 | {{GFL2WeakIcon|heavy}}'''Stability Damage: 2'''<br>Select 1 enemy target within {{Color|GF2Orange|9 tiles}} of self, deal physical damage equal to {{Color|GF2Orange|130%}} of attack, gain {{Color|GF2Orange|4 points}} of Confectance Index, and gain {{Color|GF2Orange|2 stacks}} of ($buff).\n<br>''Understanding how to deliver a lethal blow and excelling at remaining hidden demonstrates professionalism.\n\n($extraeffect)\n|-\n! buff\n| [[GFL2 Status Effects#Standard Approach|{{Color|GF2Blue|Standard Approach}}]] || [[GFL2 Status Effects#Emergency Plan|{{Color|GF2Blue|Emergency Plan}}]]\n|-\n! turn_cooldown\n| 3 || 3\n|-\n! skilllevelcount\n| 2 \n|-\n! extraeffect\n| || Change [[GFL2 Status Effects#Standard Approach|{{Color|GF2Blue|Standard Approach}}]] to [[GFL2 Status Effects#Emergency Plan|{{Color|GF2Blue|Emergency Plan}}]].\n|-\n|}"
+        }
+    }
+}

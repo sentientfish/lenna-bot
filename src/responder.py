@@ -23,6 +23,10 @@ class InvalidMediaException(Exception):
     pass
 
 
+class MediaFileNotFoundException(Exception):
+    pass
+
+
 class Media(TypedDict):
     """
     Media class definition
@@ -43,7 +47,8 @@ class Responder:
 
         media_link = self.media_dict.get(media_name, None)
         if media_link == None:
-            raise InvalidMediaException(f"Media name \"{media_name}\" is not part of any known media!")
+            raise InvalidMediaException(f"Media name \"{media_name}\" is \
+                    not part of any known media!")
 
         return media_link
 
@@ -63,22 +68,26 @@ class Responder:
         with open(doll_json_path, "r", encoding="utf8") as doll_json_file:
             doll_json = json.load(doll_json_file)
 
-            doll_data = self._parse_json(doll_json)[DATA_STRING][PARSE_STRING]
+            doll_data = self._parse_json(doll_json)[PARSE_STRING]
             doll_wikitext = doll_data[WIKITEXT_STRING][STAR_STRING]
 
             doll = Doll(doll_wikitext)
         
         return doll
 
+
     def _load_media(self):
         """
         Internal function to load the media dictionary
         """
 
-        with open(f"{DATA_DIRECTORY}{MEDIA_FILE}", "r") as media_file:
-            media_dict: Media = json.load(media_file)
+        try:
+            with open(f"{DATA_DIRECTORY}{MEDIA_FILE}", "r") as media_file:
+                media_dict: Media = json.load(media_file)
 
-            return media_dict
+                return media_dict
+        except FileNotFoundError:
+            raise MediaFileNotFoundException("Media file is not found!")
 
 
     def _parse_json(self, doll_json):
