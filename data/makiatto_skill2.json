@@ -1,0 +1,10 @@
+{
+    "parse": {
+      "title": "Makiatto/skill2data",
+      "pageid": 62754,
+      "redirects": [],
+      "wikitext": {
+        "*": "{| class=gf-table\n! name\n| colspan=10 | Cold Precision Shot\n|-\n! icon\n| colspan=10 | Skill_MacqiatoSSR_Active_1\n|-\n! text\n| colspan=10 | {{GFL2WeakIcon|heavy}}{{GFL2WeakIcon|freeze}}'''Stability Damage: 1'''<br>Selects 1 enemy target within {{Color|GF2Orange|9 tiles}} and deals {{GFL2WeakIcon|freeze}}{{Color|GF2Cyan|Freeze damage}} equal to {{Color|GF2Orange|160%}} of attack. Increases the critical damage of this attack by {{Color|GF2Orange|30%}}. Gains {{Color|GF2Orange|1 stack}} of [[GFL2 Status Effects#Cold Conviction|{{Color|GF2Blue|Cold Conviction}}]] for each instance of damage dealt.\n<br>''Pull the trigger with absolute confidence in victory!\n\n($extraeffect)\n|-\n! skill_cost\n| 2 || 2\n|-\n! skilllevelcount\n| 2\n|-\n! extraeffect\n| || Perform two attacks, critical damage will no longer increase, and the damage dealt is decreased to {{Color|GF2Orange|100%}} of attack. If the first attack crits, the critical rate of the second attack is increased by {{Color|GF2Orange|100%}}, and the critical damage is increased by {{Color|GF2Orange|80%}}.\n|-\n|}"
+      }
+    }
+  }
