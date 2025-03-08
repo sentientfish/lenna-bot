@@ -76,6 +76,18 @@ class Responder:
     _SKILL_START_RANGE = 1
     _SKILL_END_RANGE = 5
 
+    # Embed process variables
+    _AFFILIATION_STRING = "Affiliation"
+    _SIGNATURE_WEAPON_STRING = "Signature Weapon"
+    _WEAKNESSES_STRING = "Weaknesses"
+    _SKILLS_STRING = "Skills"
+    _UPGRADE_EFFECTS_STRING = "Upgrade effect(s):"
+    _NODES_STRING = "Nodes"
+    _BREAK_TAG = "<br>"
+    _NEWLINE_STRING = "\n"
+    _STAR_EMOJI_STRING = ":star:"
+    _ARROW_EMOJI_STRING = ":arrow_up_small:"
+
     def __init__(self):
         self.media_dict = self._load_media()
 
@@ -87,8 +99,7 @@ class Responder:
         media_link = self.media_dict.get(media_name, None)
         if media_link == None:
             raise InvalidMediaException(
-                f'Media name "{media_name}" is \
-                    not part of any known media!'
+                f'Media name "{media_name}" is not part of any known media!'
             )
 
         return media_link
@@ -113,44 +124,48 @@ class Responder:
 
         embed.add_field(
             name="",
-            value=f"{doll.rarity[:-1]}:star: {doll.role}",
+            value=f"{doll.rarity[:-1]}{Responder._STAR_EMOJI_STRING} {doll.role}",
             inline=True,
         )
 
         embed.add_field(
-            name="Affiliation",
+            name=Responder._AFFILIATION_STRING,
             value=doll.affiliation,
             inline=False,
         )
 
         embed.add_field(
-            name="Signature Weapon",
+            name=Responder._SIGNATURE_WEAPON_STRING,
             value=doll.signature_weapon,
             inline=False,
         )
 
         embed.add_field(
-            name="Weaknesses",
+            name=Responder._WEAKNESSES_STRING,
             value=f"{doll.weapon_weakness}{doll.phase_weakness}",
             inline=False,
         )
 
         embed.add_field(
-            name="Skills",
+            name=Responder._SKILLS_STRING,
             value="",
             inline=False,
         )
 
         for skill in doll.skills:
             skill_name = skill.name
-            skill_desc = skill.desc.replace("<br>", "\n")
+            skill_desc = skill.desc.replace(
+                Responder._BREAK_TAG, Responder._NEWLINE_STRING
+            )
             skill_extras = skill.extra_effects
 
             value = f"{skill_desc}"
             if skill_extras:
-                value += "Upgrade Effect(s):\n"
+                value += (
+                    f"{Responder._UPGRADE_EFFECTS_STRING}{Responder._NEWLINE_STRING}"
+                )
                 for extra in skill_extras:
-                    value += f":arrow_up_small:{extra}\n"
+                    value += f"{Responder._ARROW_EMOJI_STRING}{extra}{Responder._NEWLINE_STRING}"
 
             embed.add_field(
                 name=skill_name,
@@ -160,14 +175,16 @@ class Responder:
 
         if include_keys:
             embed.add_field(
-                name="Nodes",
+                name=Responder._NODES_STRING,
                 value="",
                 inline=False,
             )
 
             for node in doll.nodes:
                 node_name = node.name
-                node_desc = node.desc.replace("<br>", "\n")
+                node_desc = node.desc.replace(
+                    Responder._BREAK_TAG, Responder._NEWLINE_STRING
+                )
 
                 embed.add_field(
                     name=node_name,
