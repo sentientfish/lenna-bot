@@ -16,7 +16,7 @@ This includes:
 - skills            -> TODO: do it
 """
 
-import mwparserfromhell as mwp
+import wikitextparser as wtp
 
 class Doll:
     """
@@ -32,6 +32,9 @@ class Doll:
             self.name = name
             self.desc = desc
             self.position = position
+        
+        def __str__(self):
+            return f"name: {self.name}, desc: {self.desc}, position: {self.position}"
         
 
     def __init__(self, doll_wikitext):
@@ -63,7 +66,7 @@ class Doll:
             name_wikitext = self._get_template_param_value(template, name_string)
 
             name_template = self._get_base_template(name_wikitext)
-            name = self._get_base_template(name_template).params[1]
+            name = name_template.arguments[1].value
         
         desc_string = f"Node{node_position}desc"
         if key_position != 0:
@@ -105,7 +108,7 @@ class Doll:
         Internal function to get the base template of a wikitext
         """
 
-        return mwp.parse(wikitext).filter_templates()[0]
+        return wtp.parse(wikitext).templates[0]
 
 
     def _get_template_param_value(self, template, param_name):
@@ -113,4 +116,4 @@ class Doll:
         Internal function to get the value of a parameter 
         """
         
-        return template.get(param_name).value
+        return template.get_arg(param_name).value

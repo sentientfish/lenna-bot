@@ -66,10 +66,8 @@ class Responder:
         self._query_wiki(doll_name)
 
         with open(doll_json_path, "r", encoding="utf8") as doll_json_file:
-            doll_json = json.load(doll_json_file)
-
-            doll_data = self._parse_json(doll_json)[PARSE_STRING]
-            doll_wikitext = doll_data[WIKITEXT_STRING][STAR_STRING]
+            doll_wikitext = json.load(doll_json_file)[PARSE_STRING]\
+                    [WIKITEXT_STRING][STAR_STRING]
 
             doll = Doll(doll_wikitext)
         
@@ -88,14 +86,6 @@ class Responder:
                 return media_dict
         except FileNotFoundError:
             raise MediaFileNotFoundException("Media file is not found!")
-
-
-    def _parse_json(self, doll_json):
-        """
-        Internal function to parse the loaded json
-        """
-        
-        return doll_json
 
 
     def _query_wiki(self, doll_name):

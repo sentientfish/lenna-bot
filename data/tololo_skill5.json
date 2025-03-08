@@ -1,0 +1,10 @@
+{
+    "parse": {
+      "title": "Tololo/skill5data",
+      "pageid": 63668,
+      "redirects": [],
+      "wikitext": {
+        "*": "{| class=gf-table\n! name\n| colspan=10 | Aurora Curtain\n|-\n! icon\n| colspan=10 | Skill_TololoSSR_Passive_4\n|-\n! text\n| colspan=10 | Fills Confectance Index to maximum at the start of the battle. After  attacking, if Confectance Index is at max, consumes all of it and gains {{Color|GF2Orange|1 instance}} of an [[GFL2 Status Effects#Extra Action|{{Color|GF2Blue|Extra Action}}]]. At the start of each action, for every {{Color|GF2Orange|2 points}} of Confectance Index, gains {{Color|GF2Orange|1}} random buff until the end of the action. {{Color|GF2Orange|Each time}} an allied unit deals {{GFL2WeakIcon|hydro}}{{Color|GF2LightBlue|Hydro damage}}, this unit gains {{Color|GF2Orange|1 stack}} of [[GFL2 Status Effects#Lightspike|{{Color|GF2Blue|Lightspike}}]].\n<br>''Beneath the aurora lies the solitary path of exploration.\n\n($extraeffect)\n|-\n! skilllevelcount\n| 3\n|-\n! extraeffect\n| || During an [[GFL2 Status Effects#Extra Action|{{Color|GF2Blue|Extra Action}}]], this unit gains [[GFL2 Status Effects#Targeted Attack Boost II|{{Color|GF2Blue|Targeted Attack Boost II}}]], [[GFL2 Status Effects#Critical Rate Boost II|{{Color|GF2Blue|Critical Rate Boost II}}]], [[GFL2 Status Effects#Phase Boost II|{{Color|GF2Blue|Phase Boost II}}]] and [[GFL2 Status Effects#Piercing II|{{Color|GF2Blue|Piercing II}}]] for {{Color|GF2Orange|2 turns}}. || During an [[GFL2 Status Effects#Extra Action|{{Color|GF2Blue|Extra Action}}]], this unit gains [[GFL2 Status Effects#Targeted Attack Boost II|{{Color|GF2Blue|Targeted Attack Boost II}}]], [[GFL2 Status Effects#Critical Rate Boost II|{{Color|GF2Blue|Critical Rate Boost II}}]], [[GFL2 Status Effects#Phase Boost II|{{Color|GF2Blue|Phase Boost II}}]] and [[GFL2 Status Effects#Piercing II|{{Color|GF2Blue|Piercing II}}]] for {{Color|GF2Orange|2 turns}}. The effects of [[GFL2 Status Effects#Lightspike|{{Color|GF2Blue|Lightspike}}]] is enhanced, increasing critical rate and critical damage by {{Color|GF2Orange|2%}}.\n|}"
+      }
+    }
+  }
