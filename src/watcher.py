@@ -66,7 +66,9 @@ class Watcher:
         """
 
         include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
-        doll_info_embed = self.responder.get_doll_data(doll_name, include_keys)
+        doll_info_embed = self.responder.get_doll_data(
+            doll_name.lower().title(), include_keys
+        )
 
         await ctx.send(embed=doll_info_embed)
 

@@ -4,16 +4,20 @@ Lenna's Response Handler
 Takes user message and prepares the appropriate response
 """
 
-import os
 import json
 
-from typing import TypedDict
 from discord import (
     Embed,
     Color,
 )
+from functools import lru_cache
+import requests
+from typing import TypedDict
 
 from doll import Doll
+
+
+IOPWIKI_API_URL = "https://iopwiki.com/api.php?action=parse&prop=wikitext&format=json&redirects=1&page="
 
 
 class InvalidMediaException(Exception):
@@ -110,7 +114,6 @@ class Responder:
         Returns a discord embed
         """
 
-        # TODO: Implement the query method
         doll_data = self._get_doll_data(doll_name)
         doll_skill_data_array = self._get_doll_skills(doll_name)
 
@@ -215,9 +218,8 @@ class Responder:
         Internal function to query the wiki and get doll info
         """
 
-        # TODO: Actually build the query url
         try:
-            query_url = f"{Responder._DATA_DIRECTORY}{doll_name}.json"
+            query_url = f"{IOPWIKI_API_URL}{doll_name}"
 
             return self._query_wiki(query_url)
         except FileNotFoundError:
@@ -228,27 +230,33 @@ class Responder:
         Internal function to query the wiki and get doll skills
         """
 
-        # TODO: Actually build the query url
         try:
             skill_data_array = []
             for i in range(Responder._SKILL_START_RANGE, Responder._SKILL_END_RANGE):
                 skill_index_url = "" if i == 1 else i
-                skill_url = f"{Responder._DATA_DIRECTORY}{doll_name}_skill{skill_index_url}.json"
+                skill_query_url = (
+                    f"{IOPWIKI_API_URL}{doll_name}/skill{skill_index_url}data"
+                )
 
-                skill_data = self._query_wiki(skill_url)
+                skill_data = self._query_wiki(skill_query_url)
                 skill_data_array.append(skill_data)
 
             return skill_data_array
         except FileNotFoundError:
             raise SkillNotFoundException(f"Doll {doll_name} skill {i} was not found!")
 
+    @lru_cache(maxsize=128)
     def _query_wiki(self, query_url):
         """
         Internal function to query the wiki and return the wikitext
         """
 
-        # TODO: Actually query the wiki
-        with open(query_url, "r", encoding="utf8") as query_file:
-            return json.load(query_file)[Responder._PARSE_STRING][
-                Responder._WIKITEXT_STRING
-            ][Responder._STAR_STRING]
+        headers = {
+            "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
+            "From": "sentientfishsentient@gmail.com",
+        }
+
+        response = requests.get(query_url, headers=headers)
+        return json.loads(response.content)[Responder._PARSE_STRING][
+            Responder._WIKITEXT_STRING
+        ][Responder._STAR_STRING]
