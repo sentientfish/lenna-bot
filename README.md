@@ -14,11 +14,15 @@ Currently, Lenna will listen for the following commands:
 ---------------------------------------------------------------------------------------------------------------------
 
 ### Examples
-`!bingo`\n
-`!echo hello!`\n
-`!lookup makiatto`\n
-`!lookup makiatto with_keys`\n
-`!lookup mAKiATTo`\n
+`!bingo`
+
+`!echo hello!`
+
+`!lookup makiatto`
+
+`!lookup makiatto with_keys`
+
+`!lookup mAKiATTo`
 
 ## Feedback
 
