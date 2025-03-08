@@ -2,21 +2,32 @@
 Doll class
 
 Takes a wikitext and parses it into information of interest
-This includes:
-- fullName          -> renamed to full_name
-- role
-- rarity
-- affiliation
-- favweapon         -> renamed to weapon_name
-- imprint           -> renamed to signature_weapon
-- wepweakness       -> renamed to weapon_weakness
-- phaseweakness     -> renamed to phase_weakness
-- GFL               -> renamed to gfl_name
-- Node*             -> collected into a list named nodes
-- skills            -> TODO: do it
+Fields and their wikitext correspondent:
+-----------------------------------------------------
+| No.   | Wikitext          | Field                 |
+-----------------------------------------------------
+| 01    | fullName          | full_name             |
+| 02    | role              | role                  |
+| 03    | rarity            | rarity                |
+| 04    | affiliation       | affiliation           |
+| 05    | favweapon         | weapon_name           |
+| 06    | imprint           | signature_weapon      |
+| 07    | wepweakness       | weapon_weakness       |
+| 08    | phaseweakness     | phase_weakness        |
+| 09    | GFL               | gfl_name              |
+| 10    | Node*             | nodes                 |
+| 11    | N/A               | skills                |
+-----------------------------------------------------
 """
 
 import wikitextparser as wtp
+
+IMPORTANT_NODES = [
+    4,
+    7,
+    10,
+    11,
+]
 
 class Node:
     """
@@ -63,6 +74,9 @@ class Doll:
     _KEY_INDEX = 0
     _FIRST_VALUE_INDEX = 1
     _SIMPLE_DATA_ARRAY_LENGTH = 2
+    _KEY_POSITION_START_RANGE = 1
+    _KEY_POSITION_END_RANGE = 3
+    _INVALID_KEY_POSITION = 0
 
     class SKILL_PARAMETER_STRING:
         """
@@ -99,7 +113,7 @@ class Doll:
         name = None
         if is_key:
             name_string = f"Node{node_position}name"
-            if key_position != 0:
+            if key_position != Doll._INVALID_KEY_POSITION:
                 name_string += f"{key_position}"
             name_wikitext = self._get_template_param_value(template, name_string)
 
@@ -107,10 +121,11 @@ class Doll:
             name = name_template.arguments[1].value
         
         desc_string = f"Node{node_position}desc"
-        if key_position != 0:
+        if key_position != Doll._INVALID_KEY_POSITION:
             desc_string += f"{key_position}"
         
         desc = self._get_template_param_value(template, desc_string)
+        desc = self._simplify(desc)
         node = Node(name, desc, node_position)
 
         return node
@@ -121,22 +136,21 @@ class Doll:
         Internal function to get all doll nodes
         """
 
-        nodes = [
-            self._get_node(template, 1),
-            self._get_node(template, 2),
-            self._get_node(template, 3),
-            self._get_node(template, 4, is_key=True, key_position=1),
-            self._get_node(template, 4, is_key=True, key_position=2),
-            self._get_node(template, 5),
-            self._get_node(template, 6),
-            self._get_node(template, 7, is_key=True, key_position=1),
-            self._get_node(template, 7, is_key=True, key_position=2),
-            self._get_node(template, 8),
-            self._get_node(template, 9),
-            self._get_node(template, 10, is_key=True, key_position=1),
-            self._get_node(template, 10, is_key=True, key_position=2),
-            self._get_node(template, 11, is_key=True),
-        ]
+        nodes = []
+        for important_node in IMPORTANT_NODES:
+            for i in range(Doll._KEY_POSITION_START_RANGE, Doll._KEY_POSITION_END_RANGE):
+                key_position = i
+                if important_node == 11:
+                    key_position = Doll._INVALID_KEY_POSITION
+                
+                node = self._get_node(
+                    template,
+                    important_node,
+                    is_key=True,
+                    key_position=key_position
+                )
+
+                nodes.append(node)
 
         return nodes
 

@@ -18,6 +18,9 @@ class Watcher:
     """
     Watcher class definition
     """
+
+    _INCLUDE_KEYS_STRING = "with_keys"
+
     def __init__(self, token, cmd_prefix):
         self.token = token
         self.cmd_prefix = cmd_prefix
@@ -62,13 +65,15 @@ class Watcher:
         await ctx.send(arg)
     
 
-    async def lookup(self, ctx, doll_name):
+    async def lookup(self, ctx, doll_name, with_keys=""):
         """
         Looks up doll information
         """
-        doll = self.responder.get_doll_data(doll_name)
+        
+        include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
+        doll_info_embed = self.responder.get_doll_data(doll_name, include_keys)
 
-        await ctx.send("Doll information found!")
+        await ctx.send(embed=doll_info_embed)
 
 
     def run(self):
