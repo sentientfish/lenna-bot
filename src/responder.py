@@ -15,19 +15,36 @@ from discord import (
 
 from doll import Doll
 
+
 class InvalidMediaException(Exception):
+    """
+    Exception for when media requested is not found in media json
+    """
+
     pass
 
 
 class MediaFileNotFoundException(Exception):
+    """
+    Exception for when the media json file is not found
+    """
+
     pass
 
 
 class DollNotFoundException(Exception):
+    """
+    Exception for when doll query returned a failure
+    """
+
     pass
 
 
 class SkillNotFoundException(Exception):
+    """
+    Exception for when doll skill query returned a failure
+    """
+
     pass
 
 
@@ -36,11 +53,16 @@ class Media(TypedDict):
     Media class definition
     No need to do anything, TypedDict will handle it all
     """
+
     pass
 
 
 class Responder:
+    """
+    Response handler definition
+    """
 
+    # Media-related variables
     _DATA_DIRECTORY = "../data/"
     _MEDIA_FILE = "media.json"
 
@@ -57,7 +79,6 @@ class Responder:
     def __init__(self):
         self.media_dict = self._load_media()
 
-
     def get_media(self, media_name):
         """
         Function to fetch the media needed
@@ -65,15 +86,17 @@ class Responder:
 
         media_link = self.media_dict.get(media_name, None)
         if media_link == None:
-            raise InvalidMediaException(f"Media name \"{media_name}\" is \
-                    not part of any known media!")
+            raise InvalidMediaException(
+                f'Media name "{media_name}" is \
+                    not part of any known media!'
+            )
 
         return media_link
-
 
     def get_doll_data(self, doll_name, include_keys=False):
         """
         Function to fetch doll information
+        Returns a discord embed
         """
 
         # TODO: Implement the query method
@@ -81,7 +104,7 @@ class Responder:
         doll_skill_data_array = self._get_doll_skills(doll_name)
 
         doll = Doll(doll_data, doll_skill_data_array)
-        
+
         embed = Embed(
             title=doll.full_name,
             description=f"{doll.gfl_name}",
@@ -151,9 +174,8 @@ class Responder:
                     value=node_desc,
                     inline=False,
                 )
-        
-        return embed
 
+        return embed
 
     def _load_media(self):
         """
@@ -161,7 +183,9 @@ class Responder:
         """
 
         try:
-            with open(f"{Responder._DATA_DIRECTORY}{Responder._MEDIA_FILE}", "r") as media_file:
+            with open(
+                f"{Responder._DATA_DIRECTORY}{Responder._MEDIA_FILE}", "r"
+            ) as media_file:
 
                 media_dict: Media = json.load(media_file)
 
@@ -173,7 +197,7 @@ class Responder:
         """
         Internal function to query the wiki and get doll info
         """
-        
+
         # TODO: Actually build the query url
         try:
             query_url = f"{Responder._DATA_DIRECTORY}{doll_name}.json"
@@ -196,7 +220,7 @@ class Responder:
 
                 skill_data = self._query_wiki(skill_url)
                 skill_data_array.append(skill_data)
-            
+
             return skill_data_array
         except FileNotFoundError:
             raise SkillNotFoundException(f"Doll {doll_name} skill {i} was not found!")
@@ -205,7 +229,9 @@ class Responder:
         """
         Internal function to query the wiki and return the wikitext
         """
-        
+
         # TODO: Actually query the wiki
         with open(query_url, "r", encoding="utf8") as query_file:
-            return json.load(query_file)[Responder._PARSE_STRING][Responder._WIKITEXT_STRING][Responder._STAR_STRING]
+            return json.load(query_file)[Responder._PARSE_STRING][
+                Responder._WIKITEXT_STRING
+            ][Responder._STAR_STRING]

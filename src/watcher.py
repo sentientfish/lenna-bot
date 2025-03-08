@@ -19,6 +19,7 @@ class Watcher:
     Watcher class definition
     """
 
+    # Doll lookup variable
     _INCLUDE_KEYS_STRING = "with_keys"
 
     def __init__(self, token, cmd_prefix):
@@ -36,19 +37,15 @@ class Watcher:
         self._add_command("echo", Watcher.echo)
         self._add_command("lookup", Watcher.lookup)
 
-
     def _add_command(self, name, func):
         """
         Helper function to add the command to the bot
-        taken from https://stackoverflow.com/questions/75674926/how-do-i-\
-                add-commands-to-a-class-discord-py
+        taken from https://stackoverflow.com/questions/75674926/how-do-i-add-commands-to-a-class-discord-py
         """
         self.bot.command(name=name)(wraps(func)(partial(func, self)))
 
-
     async def _on_ready(self):
         print(f"Lenna logged in as user: {self.bot.user}")
-
 
     async def bingo(self, ctx):
         """
@@ -57,28 +54,24 @@ class Watcher:
         bingo_video = self.responder.get_media(LENA_BINGO_VIDEO)
         await ctx.send(bingo_video)
 
-
     async def echo(self, ctx, arg):
         """
         Cutely echoes the message
         """
         await ctx.send(arg)
-    
 
     async def lookup(self, ctx, doll_name, with_keys=""):
         """
         Looks up doll information
         """
-        
+
         include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
         doll_info_embed = self.responder.get_doll_data(doll_name, include_keys)
 
         await ctx.send(embed=doll_info_embed)
-
 
     def run(self):
         """
         Runs the bot inside Watcher
         """
         self.bot.run(self.token)
-    
