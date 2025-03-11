@@ -277,7 +277,7 @@ class Responder:
         """
 
         query_url = f"{IOPWIKI_API_URL}{IOPWIKI_INFO_FETCH_PARAM}{page_title}"
-        query_json = self._send_query(query_url)
+        query_json = self._query(query_url)
         
         pages = query_json["query"]["pages"]
         page_id = None
@@ -319,12 +319,12 @@ class Responder:
         if wikitext_json != None:
             self._write(cache, cache_directory)
         else:
-            response_json = self._send_query_and_save(query_url, cache_directory)
+            response_json = self._query_and_save(query_url, cache_directory)
             wikitext_json = self._get_wikitext(response_json)
 
         return wikitext_json
 
-    def _send_query(self, query_url):
+    def _query(self, query_url):
         """
         Internal function to send a query
         """
@@ -336,12 +336,12 @@ class Responder:
         response = requests.get(query_url, headers=headers)
         return json.loads(response.content)
 
-    def _send_query_and_save(self, query_url, save_directory):
+    def _query_and_save(self, query_url, save_directory):
         """
         Internal function to send a query and save it
         """
 
-        response = self._send_query(query_url)
+        response = self._query(query_url)
         response_json = json.loads(response.content)
 
         response_json[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
