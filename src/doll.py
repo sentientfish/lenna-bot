@@ -74,7 +74,7 @@ class Doll:
     ]
     _KEY_INDEX = 0
     _FIRST_VALUE_INDEX = 1
-    _SIMPLE_DATA_ARRAY_LENGTH = 2
+    _SIMPLE_DATA_LIST_LENGTH = 2
     _KEY_POSITION_START_RANGE = 1
     _KEY_POSITION_END_RANGE = 3
     _INVALID_KEY_POSITION = 0
@@ -88,7 +88,7 @@ class Doll:
         TEXT_STRING = "text"
         EXTRA_EFFECT_STRING = "extraeffect"
 
-    def __init__(self, doll_data, skill_data_array):
+    def __init__(self, doll_data, doll_skills):
         template = self._get_base_template(doll_data)
 
         self.full_name = self._get_template_param_value(template, "fullname")
@@ -102,7 +102,7 @@ class Doll:
         self.gfl_name = self._get_template_param_value(template, "GFL")
 
         self.nodes = self._get_nodes(template)
-        self.skills = self._get_skills(skill_data_array)
+        self.skills = self._get_skills(doll_skills)
 
     def _get_node(self, template, node_position, is_key=False, key_position=0):
         """
@@ -151,13 +151,13 @@ class Doll:
 
         return nodes
 
-    def _get_skills(self, skill_data_array):
+    def _get_skills(self, doll_skills):
         """
         Internal function to parse doll skill tables
         """
 
         skills = []
-        for skill_data in skill_data_array:
+        for skill_data in doll_skills:
 
             skill = self._parse_skill_table(skill_data)
             skills.append(skill)
@@ -172,13 +172,13 @@ class Doll:
         table_dictionary = {}
         for data in table_data:
             key = data[Doll._KEY_INDEX]
-            data_array_length = len(data)
+            data_list_length = len(data)
 
             value = ""
-            if data_array_length > Doll._SIMPLE_DATA_ARRAY_LENGTH:
+            if data_list_length > Doll._SIMPLE_DATA_LIST_LENGTH:
                 value = []
 
-                for i in range(Doll._FIRST_VALUE_INDEX, data_array_length):
+                for i in range(Doll._FIRST_VALUE_INDEX, data_list_length):
                     data_val = data[i]
                     value.append(data_val)
             else:
@@ -258,15 +258,15 @@ class Doll:
                 case self.SKILL_PARAMETER_STRING.EXTRA_EFFECT_STRING:
                     extra_effects = skill_table_dictionary[key]
 
-                    extra_effects_array = []
+                    extra_effects_list = []
                     for extra_effect in extra_effects:
                         if extra_effect == "":
                             continue
 
                         cleaned_extra_effect = self._simplify(extra_effect)
-                        extra_effects_array.append(cleaned_extra_effect)
+                        extra_effects_list.append(cleaned_extra_effect)
 
-                    parsed_skill_dictionary[key] = extra_effects_array
+                    parsed_skill_dictionary[key] = extra_effects_list
                 case _:
                     # We found some variables, save them so we can replace it later
                     variable_skill_parameters.append(key)
@@ -281,10 +281,10 @@ class Doll:
         for parameter in variable_skill_parameters:
             parameter_string = f"(${parameter})"
 
-            parameter_array = skill_table_dictionary[parameter]
+            parameter_list = skill_table_dictionary[parameter]
             parameter_value = ""
 
-            for value in parameter_array:
+            for value in parameter_list:
                 value = self._simplify(value)
                 parameter_value += f"{value}/"
 

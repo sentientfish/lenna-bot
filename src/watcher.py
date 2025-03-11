@@ -6,6 +6,7 @@ It watches channel for prompts and responds as needed
 """
 
 import re
+from textwrap import dedent
 
 from functools import partial, wraps
 import discord
@@ -48,7 +49,7 @@ class Watcher:
         self.bot.command(name=name)(wraps(func)(partial(func, self)))
 
     async def _on_ready(self):
-        print(f"Lenna logged in as user: {self.bot.user}")
+        self.log.info(f"WATCHER: Lenna logged in as user: {self.bot.user}")
 
     async def bingo(self, ctx):
         """
@@ -67,16 +68,31 @@ class Watcher:
         """
         Looks up doll information
         """
+        embed = None
+        try:
+            include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
+            fixed_doll_name = self._fix_doll_name(doll_name)
+            embed = self.responder.get_doll(
+                fixed_doll_name, include_keys,
+            )
 
-        include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
-        fixed_doll_name = self._fix_doll_name(doll_name)
-        doll_info_embed = self.responder.get_doll_data(
-            fixed_doll_name, include_keys
-        )
+            self.log.info(f"WATCHER: Embed Fields: {str(embed.fields)}")
+        except Exception as e:
+            self.log.error(f"WATCHER: Received an error when looking up doll information for {doll_name}")
+            self.log.error(f"WATCHER: Exception:\n{e}")
 
-        self.log.info(f"WATCHER: Embed Fields: {str(doll_info_embed.fields)}")
+            lookup_failure_message = f"""
+                Eh!? Lenna doesn't know {doll_name}, are you sure you typed their name correctly, Shikikan?
+                If you think this is a mistake, please talk to @aguren ~
+            """
 
-        await ctx.send(embed=doll_info_embed)
+            embed = discord.Embed(
+                title="Doll Lookup Failure",
+                description=dedent(lookup_failure_message),
+                color=discord.Color.red(),
+            )
+
+        await ctx.send(embed=embed)
 
     def run(self):
         """
@@ -84,7 +100,7 @@ class Watcher:
         """
         self.bot.run(self.token)
 
-    def _fix_doll_name(doll_name):
+    def _fix_doll_name(self, doll_name):
         """
         Fixes the doll name to properly capitalize them
         Returns the fixed doll name

@@ -38,7 +38,9 @@ class InvalidMediaException(Exception):
     Exception for when media requested is not found in media json
     """
 
-    pass
+    def __init__(self, message):
+        self.message = f"InvalidMediaException: {message}"
+        super().__init__(self.message)
 
 
 class MediaFileNotFoundException(Exception):
@@ -46,7 +48,9 @@ class MediaFileNotFoundException(Exception):
     Exception for when the media json file is not found
     """
 
-    pass
+    def __init__(self, message):
+        self.message = f"MediaFileNotFoundException: {message}"
+        super().__init__(self.message)
 
 
 class DollNotFoundException(Exception):
@@ -54,7 +58,9 @@ class DollNotFoundException(Exception):
     Exception for when doll query returned a failure
     """
 
-    pass
+    def __init__(self, message):
+        self.message = f"DollNotFoundException: {message}"
+        super().__init__(self.message)
 
 
 class SkillNotFoundException(Exception):
@@ -62,7 +68,19 @@ class SkillNotFoundException(Exception):
     Exception for when doll skill query returned a failure
     """
 
-    pass
+    def __init__(self, message):
+        self.message = f"SkillNotFoundException: {message}"
+        super().__init__(self.message)
+
+
+class CacheNotFoundException(Exception):
+    """
+    Exception for when cache lookup returned a failure
+    """
+
+    def __init__(self, message):
+        self.message = f"CacheNotFoundException: {message}"
+        super().__init__(self.message)
 
 
 class Media(TypedDict):
@@ -84,6 +102,7 @@ class Responder:
     _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
     _MEDIA_FILE = "media.json"
     _FETCHED_STRING = "fetched"
+    _UPDATEABLE_STRING = "updateable"
 
     # Parsing variables
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -110,6 +129,7 @@ class Responder:
     _NEWLINE_STRING = "\n"
     _STAR_EMOJI_STRING = ":star:"
     _ARROW_EMOJI_STRING = ":arrow_up_small:"
+    _WARNING_FOOTER = f"!!!\nShikikan, Lenna failed to fetch data for this doll, but Lenna remembers them! Make sure to check the data out and see what Lenna missed!\n!!!"
 
     def __init__(self, log):
         self.media_dict = self._load_media()
@@ -128,22 +148,56 @@ class Responder:
 
         return media_link
 
-    def get_doll_data(self, doll_name, include_keys=False):
+    def get_doll(self, doll_name, include_keys=False, use_cache=False):
         """
         Function to fetch doll information
         Returns a discord embed
         """
+        updateable = True
+        try:
+            raw_doll_data, update, doll_file_directory, doll_data_updateable = self._get_doll_data(doll_name, use_cache=use_cache)
+            raw_doll_skills, update_list, skill_directories, skill_data_updateable = self._get_doll_skills(doll_name, use_cache=use_cache)
 
-        doll_data = self._get_doll_data(doll_name)
-        doll_skill_data_array = self._get_doll_skills(doll_name)
+            updateable = False if not doll_data_updateable or not skill_data_updateable else True
 
-        doll = Doll(doll_data, doll_skill_data_array)
+            doll_data, doll_skills = self._process_raw_doll_info(raw_doll_data, raw_doll_skills)
+
+            doll = Doll(doll_data, doll_skills)
+
+        except Exception as e:
+            if isinstance(e, CacheNotFoundException):
+                raise
+
+            # Doll was not parseable, use cache
+            self.log.error(f"RESPONDER: Ran into an error when looking up doll information for {doll_name}")
+            self.log.error(f"RESPONDER: Exception:\n{e}")
+            self.log.info("RESPONDER: Attempting to use cache...")
+
+            use_cache = True
+            updateable = False
+            raw_doll_data, update, doll_file_directory, _ = self._get_doll_data(doll_name, use_cache=use_cache)
+            raw_doll_skills, update_list, skill_directories, _ = self._get_doll_skills(doll_name, use_cache=use_cache)
+
+            doll_data, doll_skills = self._process_raw_doll_info(raw_doll_data, raw_doll_skills)
+
+            doll = Doll(doll_data, doll_skills)
+
+        if update:
+            self._update(raw_doll_data, doll_file_directory, updateable)
+        for raw_doll_skill, skill_directory, update_skill in zip(raw_doll_skills, skill_directories, update_list):
+            if update_skill:
+                self._update(raw_doll_skill, skill_directory, updateable)
 
         embed = Embed(
             title=doll.full_name,
             description=f"{doll.gfl_name}",
             color=Color.orange(),
         )
+
+        if not updateable:
+            embed.set_footer(
+                text=self._WARNING_FOOTER,
+            )
 
         embed.add_field(
             name="",
@@ -239,9 +293,24 @@ class Responder:
         except FileNotFoundError:
             raise MediaFileNotFoundException("Media file is not found!")
 
-    def _get_doll_data(self, doll_name):
+    def _process_raw_doll_info(self, raw_doll_data, raw_doll_skills):
+        doll_data = self._get_wikitext(raw_doll_data)
+
+        doll_skills = []
+        for raw_doll_skill in raw_doll_skills:
+            doll_skill = self._get_wikitext(raw_doll_skill)
+            doll_skills.append(doll_skill)
+
+        return doll_data, doll_skills
+
+    def _get_doll_data(self, doll_name, use_cache=False):
         """
         Internal function to get doll info and query if needed
+
+        Returns:
+        doll_data: data of the doll
+        update: whether or not the data needs to be updated
+        doll_file_directory: location of where the doll cache should be located
         """
 
         doll_file_directory = f"{self._CACHE_DIRECTORY}{doll_name.lower()}.json"
@@ -249,19 +318,27 @@ class Responder:
         doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
         query_url = f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{doll_name}"
 
-        doll_data = self._query_wiki(query_url, doll_name, doll_file_directory)
-        if doll_data == None:
-            raise DollNotFoundException()
+        raw_doll_data, update, updateable = self._query_wiki(query_url, doll_name, doll_file_directory, use_cache)
+        if raw_doll_data == None:
+            raise DollNotFoundException(f"Doll {doll_name} was not found!")
         
-        return doll_data
+        return raw_doll_data, update, doll_file_directory, updateable
 
-    def _get_doll_skills(self, doll_name):
+    def _get_doll_skills(self, doll_name, use_cache=False):
         """
         Internal function to query the wiki and get doll skills
+
+        Returns a list of tuples of the following:
+        skill_data: data of the skill
+        update: whether or not the data needs to be updated
+        doll_file_directory: location of where the skill_data cache should be located
         """
 
-        skill_data_array = []
+        raw_skill_list = []
+        update_list = []
+        skill_directories = []
         query_doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
+        updateable = True
         for i in range(self._SKILL_START_RANGE, self._SKILL_END_RANGE):
             skill_index = "" if i == 1 else i
 
@@ -271,24 +348,17 @@ class Responder:
             )
             skill_file_directory = f"{self._CACHE_DIRECTORY}{doll_name.lower()}_skill{skill_index}.json"
 
-            skill_data = self._query_wiki(skill_query_url, skill_page, skill_file_directory)
+            raw_skill_data, update, json_updateable = self._query_wiki(skill_query_url, skill_page, skill_file_directory, use_cache)
+            updateable = updateable if not updateable else json_updateable
 
-            if skill_data == None:
-                raise SkillNotFoundException()
+            if raw_skill_data == None:
+                raise SkillNotFoundException(f"Skill {skill_page} was not found!")
 
-            skill_data_array.append(skill_data)
+            raw_skill_list.append(raw_skill_data)
+            update_list.append(update)
+            skill_directories.append(skill_file_directory)
 
-        return skill_data_array
-
-    def _write(self, payload, filename):
-        """
-        Internal function to write payload into a page
-
-        Expects a JSON payload
-        """
-
-        with open(filename, "w", encoding="utf8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=4)
+        return raw_skill_list, update_list, skill_directories, updateable
 
     def _query_page_last_edit(self, page_title):
         """
@@ -310,43 +380,45 @@ class Responder:
         
         return datetime.strptime(pages[page_id][self._TOUCHED_STRING], format=self._DATE_FORMAT)
 
-    def _query_wiki(self, query_url, page_title, cache_directory):
+    def _query_wiki(self, query_url, page_title, cache_directory, use_cache=False):
         """
         Internal function to query the wiki and return the wikitext
         TODO: Check if this actually works for every page of interest
         TESTED TO WORK: Doll data, Doll skills
         """
 
-        wikitext_json = None
         try:
             cache = None
             with open(cache_directory, "r", encoding="utf8") as cache_file:
                 cache = json.load(cache_file)
+                updateable = cache[self._UPDATEABLE_STRING]
                 fetch_time = datetime.strptime(cache[self._FETCHED_STRING], self._DATE_FORMAT)
                 days_since = datetime.now(timezone.utc) - fetch_time.replace(tzinfo=timezone.utc)
 
-                if days_since.days >= 1:
+                if not updateable or use_cache:
+                    self.log.warning(f"RESPONDER: Force use of cache for {page_title}!")
+                    return cache, False if not updateable else True, updateable
+                elif days_since.days >= 1:
                     last_edit = self._query_page_last_edit(page_title)
 
                     if fetch_time > last_edit:
-                        cache[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
-                        wikitext_json = self._get_wikitext(cache)
-                    else:
-                        wikitext_json = None
+                        return cache, False, updateable
                 else:
-                    wikitext_json = self._get_wikitext(cache)
+                    self.log.info(f"RESPONDER: Data fetched less than a day ago, using cache.")
+                    return cache, False, updateable
 
         except FileNotFoundError:
-            # No file, let wikitext_json stay None and we will query it after this
-            pass
+            self.log.info(f"RESPONDER: Unable to find cache for {page_title}!")
 
-        if wikitext_json != None:
-            self._write(cache, cache_directory)
-        else:
-            response_json = self._query_and_save(query_url, cache_directory)
-            wikitext_json = self._get_wikitext(response_json)
+            if use_cache:
+                self.log.error(f"RESPONDER: use_cache is True, but there is no cache!")
+                raise CacheNotFoundException()
+            
+            self.log.info("RESPONDER: Allowed to query!")
 
-        return wikitext_json
+        response_json = self._query(query_url)
+
+        return response_json, True, True
 
     def _query(self, query_url):
         """
@@ -362,22 +434,30 @@ class Responder:
         response = requests.get(query_url, headers=headers)
         return json.loads(response.content)
 
-    def _query_and_save(self, query_url, save_directory):
-        """
-        Internal function to send a query and save it
-        """
-
-        response_json = self._query(query_url)
-        response_json[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
-
-        self._write(response_json, save_directory)
-
-        return response_json
-
     def _get_wikitext(self, json_obj):
         """
         Internal function to get wikitext from wikimedia api response
-        because its annoying as hell
+        because it's annoying as hell
         """
 
         return json_obj[self._PARSE_STRING][self._WIKITEXT_STRING][self._STAR_STRING]
+    
+    def _write(self, payload, filename):
+        """
+        Internal function to write payload into a page
+
+        Expects a JSON payload
+        """
+        with open(filename, "w", encoding="utf8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=4)
+    
+    def _update(self, file_content, file_directory, updateable):
+        """
+        Internal function to update the local cache
+        """
+        self.log.info(f"RESPONDER: Updating {file_directory}.")
+
+        file_content[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
+        file_content[self._UPDATEABLE_STRING] = updateable
+
+        self._write(file_content, file_directory)
