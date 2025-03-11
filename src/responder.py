@@ -4,20 +4,22 @@ Lenna's Response Handler
 Takes user message and prepares the appropriate response
 """
 
+from datetime import datetime, timezone
 import json
+import os
 
 from discord import (
     Embed,
     Color,
 )
-from functools import lru_cache
 import requests
 from typing import TypedDict
 
 from doll import Doll
 
-
-IOPWIKI_API_URL = "https://iopwiki.com/api.php?action=parse&prop=wikitext&format=json&redirects=1&page="
+IOPWIKI_API_URL = "https://iopwiki.com/api.php"
+IOPWIKI_DATA_FETCH_PARAM = "?action=parse&prop=wikitext&format=json&redirects=1&page="
+IOPWIKI_INFO_FETCH_PARAM = "?action=query&format=json&prop=info&titles="
 
 
 class InvalidMediaException(Exception):
@@ -69,13 +71,18 @@ class Responder:
     # Media-related variables
     _DATA_DIRECTORY = "../data/"
     _MEDIA_FILE = "media.json"
+    _FETCHED_STRING = "fetched"
 
     # Parsing variables
+    _DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
     _DATA_STRING = "data"
     _PARSE_STRING = "parse"
     _WIKITEXT_STRING = "wikitext"
     _STAR_STRING = "*"
-
+    _QUERY_STRING = "query"
+    _PAGES_STRING = "pages"
+    _TOUCHED_STRING = "touched"
+    
     # Query variables
     _SKILL_START_RANGE = 1
     _SKILL_END_RANGE = 5
@@ -127,30 +134,30 @@ class Responder:
 
         embed.add_field(
             name="",
-            value=f"{doll.rarity[:-1]}{Responder._STAR_EMOJI_STRING} {doll.role}",
+            value=f"{doll.rarity[:-1]}{self._STAR_EMOJI_STRING} {doll.role}",
             inline=True,
         )
 
         embed.add_field(
-            name=Responder._AFFILIATION_STRING,
+            name=self._AFFILIATION_STRING,
             value=doll.affiliation,
             inline=False,
         )
 
         embed.add_field(
-            name=Responder._SIGNATURE_WEAPON_STRING,
+            name=self._SIGNATURE_WEAPON_STRING,
             value=doll.signature_weapon,
             inline=False,
         )
 
         embed.add_field(
-            name=Responder._WEAKNESSES_STRING,
+            name=self._WEAKNESSES_STRING,
             value=f"{doll.weapon_weakness}{doll.phase_weakness}",
             inline=False,
         )
 
         embed.add_field(
-            name=Responder._SKILLS_STRING,
+            name=self._SKILLS_STRING,
             value="",
             inline=False,
         )
@@ -158,17 +165,17 @@ class Responder:
         for skill in doll.skills:
             skill_name = skill.name
             skill_desc = skill.desc.replace(
-                Responder._BREAK_TAG, Responder._NEWLINE_STRING
+                self._BREAK_TAG, self._NEWLINE_STRING
             )
             skill_extras = skill.extra_effects
 
             value = f"{skill_desc}"
             if skill_extras:
                 value += (
-                    f"{Responder._UPGRADE_EFFECTS_STRING}{Responder._NEWLINE_STRING}"
+                    f"{self._UPGRADE_EFFECTS_STRING}{self._NEWLINE_STRING}"
                 )
                 for extra in skill_extras:
-                    value += f"{Responder._ARROW_EMOJI_STRING}{extra}{Responder._NEWLINE_STRING}"
+                    value += f"{self._ARROW_EMOJI_STRING}{extra}{self._NEWLINE_STRING}"
 
             embed.add_field(
                 name=skill_name,
@@ -178,7 +185,7 @@ class Responder:
 
         if include_keys:
             embed.add_field(
-                name=Responder._NODES_STRING,
+                name=self._NODES_STRING,
                 value="",
                 inline=False,
             )
@@ -186,7 +193,7 @@ class Responder:
             for node in doll.nodes:
                 node_name = node.name
                 node_desc = node.desc.replace(
-                    Responder._BREAK_TAG, Responder._NEWLINE_STRING
+                    self._BREAK_TAG, self._NEWLINE_STRING
                 )
 
                 embed.add_field(
@@ -204,7 +211,7 @@ class Responder:
 
         try:
             with open(
-                f"{Responder._DATA_DIRECTORY}{Responder._MEDIA_FILE}", "r"
+                f"{self._DATA_DIRECTORY}{self._MEDIA_FILE}", "r"
             ) as media_file:
 
                 media_dict: Media = json.load(media_file)
@@ -215,48 +222,138 @@ class Responder:
 
     def _get_doll_data(self, doll_name):
         """
-        Internal function to query the wiki and get doll info
+        Internal function to get doll info and query if needed
         """
 
-        try:
-            query_url = f"{IOPWIKI_API_URL}{doll_name}"
+        doll_file_directory = f"{self._DATA_DIRECTORY}{doll_name}.json"
+        query_url = f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{doll_name}"
 
-            return self._query_wiki(query_url)
-        except FileNotFoundError:
-            raise DollNotFoundException(f"Doll {doll_name} was not found!")
+        doll_data = self._query_wiki(query_url, doll_name, doll_file_directory)
+        if doll_data == None:
+            raise DollNotFoundException()
+        
+        return doll_data
 
     def _get_doll_skills(self, doll_name):
         """
         Internal function to query the wiki and get doll skills
         """
 
-        try:
-            skill_data_array = []
-            for i in range(Responder._SKILL_START_RANGE, Responder._SKILL_END_RANGE):
-                skill_index_url = "" if i == 1 else i
-                skill_query_url = (
-                    f"{IOPWIKI_API_URL}{doll_name}/skill{skill_index_url}data"
-                )
+        skill_data_array = []
+        for i in range(self._SKILL_START_RANGE, self._SKILL_END_RANGE):
+            skill_index = "" if i == 1 else i
+            skill_page = f"{doll_name}/skill{skill_index}data"
 
-                skill_data = self._query_wiki(skill_query_url)
-                skill_data_array.append(skill_data)
+            skill_query_url = (
+                f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{skill_page}"
+            )
+            skill_file_directory = f"{self._DATA_DIRECTORY}{doll_name}_skill{skill_index}.json"
 
-            return skill_data_array
-        except FileNotFoundError:
-            raise SkillNotFoundException(f"Doll {doll_name} skill {i} was not found!")
+            skill_data = self._query_wiki(skill_query_url, skill_page, skill_file_directory)
 
-    @lru_cache(maxsize=128)
-    def _query_wiki(self, query_url):
+            if skill_data == None:
+                raise SkillNotFoundException()
+
+            skill_data_array.append(skill_data)
+
+        return skill_data_array
+
+    def _write(self, payload, filename):
+        """
+        Internal function to write payload into a page
+
+        Expects a JSON payload
+        """
+
+        with open(filename, "w", encoding="utf8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=4)
+
+    def _query_page_last_edit(self, page_title):
+        """
+        Internal function to query the wiki for page information
+        Will not work as intended if page_title contains multiple titles
+
+        Returns the last edit ("touched" field) of the page
+        """
+
+        query_url = f"{IOPWIKI_API_URL}{IOPWIKI_INFO_FETCH_PARAM}{page_title}"
+        query_json = self._send_query(query_url)
+        
+        pages = query_json["query"]["pages"]
+        page_id = None
+
+        # We use for each here, but we only expect 1 page to be returned
+        for page in pages:
+            page_id = page
+        
+        return datetime.strptime(pages[page_id][self._TOUCHED_STRING], format=self._DATE_FORMAT)
+
+    def _query_wiki(self, query_url, page_title, cache_directory):
         """
         Internal function to query the wiki and return the wikitext
+        TODO: Check if this actually works for every page of interest
+        TESTED TO WORK: Doll data, Doll skills
         """
 
+        wikitext_json = None
+        try:
+            cache = None
+            with open(cache_directory, "r", encoding="utf8") as cache_file:
+                cache = json.loads(cache_file)
+                fetch_time = datetime.strptime(cache[self._FETCHED_STRING], self._DATE_FORMAT)
+                days_since = datetime.now(timezone.utc) - fetch_time
+
+                if days_since >= 1:
+                    last_edit = self._query_page_last_edit(page_title)
+
+                    if fetch_time > last_edit:
+                        cache[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
+                        wikitext_json = self._get_wikitext(cache)
+                    else:
+                        wikitext_json = None
+
+        except FileNotFoundError:
+            # No file, let wikitext_json stay None and we will query it after this
+            pass
+
+        if wikitext_json != None:
+            self._write(cache, cache_directory)
+        else:
+            response_json = self._send_query_and_save(query_url, cache_directory)
+            wikitext_json = self._get_wikitext(response_json)
+
+        return wikitext_json
+
+    def _send_query(self, query_url):
+        """
+        Internal function to send a query
+        """
         headers = {
             "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
             "From": "sentientfishsentient@gmail.com",
         }
 
         response = requests.get(query_url, headers=headers)
-        return json.loads(response.content)[Responder._PARSE_STRING][
-            Responder._WIKITEXT_STRING
-        ][Responder._STAR_STRING]
+        return json.loads(response.content)
+
+    def _send_query_and_save(self, query_url, save_directory):
+        """
+        Internal function to send a query and save it
+        """
+
+        response = self._send_query(query_url)
+        response_json = json.loads(response.content)
+
+        response_json[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
+
+        self._write(response_json, save_directory)
+
+        return response_json
+
+    def _get_wikitext(self, json_obj):
+        """
+        Internal function to get wikitext from wikimedia api response
+        because its annoying as hell
+        """
+
+        return json_obj[self._PARSE_STRING][self._WIKITEXT_STRING][self._STAR_STRING]
