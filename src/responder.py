@@ -21,6 +21,17 @@ IOPWIKI_API_URL = "https://iopwiki.com/api.php"
 IOPWIKI_DATA_FETCH_PARAM = "?action=parse&prop=wikitext&format=json&redirects=1&page="
 IOPWIKI_INFO_FETCH_PARAM = "?action=query&format=json&prop=info&titles="
 
+SPECIAL_NAMES = {
+    "Centaureissi": "Centauerissi_(GFL2)",
+    "Daiyan": "Daiyan_(GFL2)",
+    "Dushevnaya": "Dushevnaya_(GFL2)",
+    "Jiangyu": "Jiangyu_(GFL2)",
+    "Mosin-Nagant": "Mosin-Nagant_(GFL2)",
+    "Springfield": "Springfield_(GFL2)",
+    "Suomi": "Suomi_(GFL2)",
+    "Vector": "Vector_(GFL2)",
+    "Ksenia": "Ksenia_(GFL2)",
+}
 
 class InvalidMediaException(Exception):
     """
@@ -70,6 +81,7 @@ class Responder:
 
     # Media-related variables
     _DATA_DIRECTORY = "../data/"
+    _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
     _MEDIA_FILE = "media.json"
     _FETCHED_STRING = "fetched"
 
@@ -85,7 +97,7 @@ class Responder:
     
     # Query variables
     _SKILL_START_RANGE = 1
-    _SKILL_END_RANGE = 5
+    _SKILL_END_RANGE = 6
 
     # Embed process variables
     _AFFILIATION_STRING = "Affiliation"
@@ -99,8 +111,9 @@ class Responder:
     _STAR_EMOJI_STRING = ":star:"
     _ARROW_EMOJI_STRING = ":arrow_up_small:"
 
-    def __init__(self):
+    def __init__(self, log):
         self.media_dict = self._load_media()
+        self.log = log
 
     def get_media(self, media_name):
         """
@@ -169,19 +182,25 @@ class Responder:
             )
             skill_extras = skill.extra_effects
 
-            value = f"{skill_desc}"
-            if skill_extras:
-                value += (
-                    f"{self._UPGRADE_EFFECTS_STRING}{self._NEWLINE_STRING}"
-                )
-                for extra in skill_extras:
-                    value += f"{self._ARROW_EMOJI_STRING}{extra}{self._NEWLINE_STRING}"
-
             embed.add_field(
                 name=skill_name,
-                value=value,
+                value=skill_desc,
                 inline=False,
             )
+
+            embed.add_field(
+                name="",
+                value=self._UPGRADE_EFFECTS_STRING,
+                inline=False,
+            )
+
+            if skill_extras:
+                for extra in skill_extras:
+                    embed.add_field(
+                        name="",
+                        value=f"{self._ARROW_EMOJI_STRING}{extra}{self._NEWLINE_STRING}",
+                        inline=False
+                    )
 
         if include_keys:
             embed.add_field(
@@ -225,7 +244,9 @@ class Responder:
         Internal function to get doll info and query if needed
         """
 
-        doll_file_directory = f"{self._DATA_DIRECTORY}{doll_name}.json"
+        doll_file_directory = f"{self._CACHE_DIRECTORY}{doll_name.lower()}.json"
+
+        doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
         query_url = f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{doll_name}"
 
         doll_data = self._query_wiki(query_url, doll_name, doll_file_directory)
@@ -240,14 +261,15 @@ class Responder:
         """
 
         skill_data_array = []
+        query_doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
         for i in range(self._SKILL_START_RANGE, self._SKILL_END_RANGE):
             skill_index = "" if i == 1 else i
-            skill_page = f"{doll_name}/skill{skill_index}data"
 
+            skill_page = f"{query_doll_name}/skill{skill_index}data"
             skill_query_url = (
                 f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{skill_page}"
             )
-            skill_file_directory = f"{self._DATA_DIRECTORY}{doll_name}_skill{skill_index}.json"
+            skill_file_directory = f"{self._CACHE_DIRECTORY}{doll_name.lower()}_skill{skill_index}.json"
 
             skill_data = self._query_wiki(skill_query_url, skill_page, skill_file_directory)
 
@@ -299,11 +321,11 @@ class Responder:
         try:
             cache = None
             with open(cache_directory, "r", encoding="utf8") as cache_file:
-                cache = json.loads(cache_file)
+                cache = json.load(cache_file)
                 fetch_time = datetime.strptime(cache[self._FETCHED_STRING], self._DATE_FORMAT)
-                days_since = datetime.now(timezone.utc) - fetch_time
+                days_since = datetime.now(timezone.utc) - fetch_time.replace(tzinfo=timezone.utc)
 
-                if days_since >= 1:
+                if days_since.days >= 1:
                     last_edit = self._query_page_last_edit(page_title)
 
                     if fetch_time > last_edit:
@@ -311,6 +333,8 @@ class Responder:
                         wikitext_json = self._get_wikitext(cache)
                     else:
                         wikitext_json = None
+                else:
+                    wikitext_json = self._get_wikitext(cache)
 
         except FileNotFoundError:
             # No file, let wikitext_json stay None and we will query it after this
@@ -328,6 +352,8 @@ class Responder:
         """
         Internal function to send a query
         """
+        self.log.info(f"RESPONDER: Querying {query_url}")
+
         headers = {
             "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
             "From": "sentientfishsentient@gmail.com",
@@ -341,9 +367,7 @@ class Responder:
         Internal function to send a query and save it
         """
 
-        response = self._query(query_url)
-        response_json = json.loads(response.content)
-
+        response_json = self._query(query_url)
         response_json[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(self._DATE_FORMAT)
 
         self._write(response_json, save_directory)

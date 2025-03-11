@@ -1,11 +1,11 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 
 from watcher import Watcher
 
-LENA_BINGO_VIDEO = "lenna_bingo_video"
-
+LOGFILE = "lenna.log"
 CMD_PREFIX = "!"
 
 
@@ -14,7 +14,11 @@ def main():
     load_dotenv()
     token = os.getenv("DISCORD_TOKEN")
 
-    lenna_bot = Watcher(token, CMD_PREFIX)
+    log = logging.getLogger(__name__)
+    logging.basicConfig(filename=LOGFILE, encoding="utf-8")
+    log.setLevel(logging.INFO)
+    
+    lenna_bot = Watcher(log, token, CMD_PREFIX)
     lenna_bot.run()
 
 

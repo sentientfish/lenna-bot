@@ -5,6 +5,8 @@ Class that basically serves as the bot
 It watches channel for prompts and responds as needed
 """
 
+import re
+
 from functools import partial, wraps
 import discord
 from discord.ext import commands
@@ -22,10 +24,11 @@ class Watcher:
     # Doll lookup variable
     _INCLUDE_KEYS_STRING = "with_keys"
 
-    def __init__(self, token, cmd_prefix):
+    def __init__(self, log, token, cmd_prefix):
+        self.log = log
         self.token = token
         self.cmd_prefix = cmd_prefix
-        self.responder = Responder()
+        self.responder = Responder(self.log)
 
         self.intents = discord.Intents.default()
         self.intents.message_content = True
@@ -66,9 +69,12 @@ class Watcher:
         """
 
         include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
+        fixed_doll_name = self._fix_doll_name(doll_name)
         doll_info_embed = self.responder.get_doll_data(
-            doll_name.lower().title(), include_keys
+            fixed_doll_name, include_keys
         )
+
+        self.log.info(f"WATCHER: Embed Fields: {str(doll_info_embed.fields)}")
 
         await ctx.send(embed=doll_info_embed)
 
@@ -77,3 +83,16 @@ class Watcher:
         Runs the bot inside Watcher
         """
         self.bot.run(self.token)
+
+    def _fix_doll_name(doll_name):
+        """
+        Fixes the doll name to properly capitalize them
+        Returns the fixed doll name
+
+        E.g., "MoSIN-naGANt" -> "Mosin-Nagant"
+
+        thank you @jiggles8675!
+        """
+        return re.sub(r"[A-Za-z]+('[A-Za-z]+)?",
+                    lambda i: i.group(0).capitalize(),
+                    doll_name)
