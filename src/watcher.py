@@ -93,6 +93,6 @@ class Watcher:
 
         thank you @jiggles8675!
         """
-        return re.sub(r"[A-Za-z]+('[A-Za-z]+)?",
-                    lambda i: i.group(0).capitalize(),
-                    doll_name)
+        return re.sub(r"[A-Za-z]+([A-Za-z]+)?",
+                  lambda i: i.group(0).capitalize(),
+                  doll_name)
