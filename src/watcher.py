@@ -40,6 +40,7 @@ class Watcher:
         self._add_command("bingo", Watcher.bingo)
         self._add_command("echo", Watcher.echo)
         self._add_command("lookup", Watcher.lookup)
+        self._add_command("flookup", Watcher.flookup)
 
     def _add_command(self, name, func):
         """
@@ -64,17 +65,32 @@ class Watcher:
         """
         await ctx.send(arg)
 
-    async def lookup(self, ctx, doll_name, with_keys=""):
+    async def lookup(self, ctx, doll_name, with_keys_string=""):
+        """
+        Looks up doll information
+        """
+        with_keys = with_keys_string == Watcher._INCLUDE_KEYS_STRING
+        embed = self._lookup(doll_name, with_keys=with_keys, force=False)
+
+        await ctx.send(embed=embed)
+
+    async def flookup(self, ctx, doll_name, with_keys_string=""):
+        with_keys = with_keys_string == Watcher._INCLUDE_KEYS_STRING
+        embed = self._lookup(doll_name, with_keys=with_keys, force=True)
+
+        await ctx.send(embed=embed)
+
+    def _lookup(self, doll_name, with_keys=False, force=False):
         """
         Looks up doll information
         """
         embed = None
         try:
-            include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
             fixed_doll_name = self._fix_doll_name(doll_name)
             embed = self.responder.get_doll(
                 fixed_doll_name,
-                include_keys,
+                with_keys=with_keys,
+                force=force,
             )
 
             self.log.info(f"WATCHER: Embed Fields: {str(embed.fields)}")
@@ -95,7 +111,7 @@ class Watcher:
                 color=discord.Color.red(),
             )
 
-        await ctx.send(embed=embed)
+        return embed
 
     def run(self):
         """

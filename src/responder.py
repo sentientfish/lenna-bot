@@ -94,6 +94,16 @@ class QueryFailedException(Exception):
         super().__init__(self.message)
 
 
+class ForceQueryFailedException(Exception):
+    """
+    Exception for when a force query fails
+    """
+
+    def __init__(self, message):
+        self.message = f"ForceQueryFailedException: {message}"
+        super().__init__(self.message)
+
+
 class Media(TypedDict):
     """
     Media class definition
@@ -160,7 +170,7 @@ class Responder:
 
         return media_link
 
-    def get_doll(self, doll_name, include_keys=False, use_cache=False):
+    def get_doll(self, doll_name, with_keys=False, use_cache=False, force=False):
         """
         Function to fetch doll information
         Returns a discord embed
@@ -169,10 +179,10 @@ class Responder:
         update_cache = False
         try:
             raw_doll_data, update, doll_file_directory, doll_data_updateable = (
-                self._get_doll_data(doll_name, use_cache=use_cache)
+                self._get_doll_data(doll_name, use_cache=use_cache, force=force)
             )
             raw_doll_skills, update_list, skill_directories, skill_data_updateable = (
-                self._get_doll_skills(doll_name, use_cache=use_cache)
+                self._get_doll_skills(doll_name, use_cache=use_cache, force=force)
             )
 
             updateable = (
@@ -192,6 +202,9 @@ class Responder:
         except Exception as e:
             if isinstance(e, CacheNotFoundException):
                 raise
+            elif force:
+                self.log.error(f"RESPONDER: Force query failed! Stopping lookup...")
+                raise
 
             # Doll was not parseable, use cache
             self.log.error(
@@ -206,10 +219,10 @@ class Responder:
             use_cache = True
             updateable = False
             raw_doll_data, update, doll_file_directory, _ = self._get_doll_data(
-                doll_name, use_cache=use_cache
+                doll_name, use_cache=use_cache, force=force
             )
             raw_doll_skills, update_list, skill_directories, _ = self._get_doll_skills(
-                doll_name, use_cache=use_cache
+                doll_name, use_cache=use_cache, force=force
             )
 
             doll_data, doll_skills = self._process_raw_doll_info(
@@ -291,7 +304,7 @@ class Responder:
                         inline=False,
                     )
 
-        if include_keys:
+        if with_keys:
             embed.add_field(
                 name=self._NODES_STRING,
                 value="",
@@ -334,7 +347,7 @@ class Responder:
 
         return doll_data, doll_skills
 
-    def _get_doll_data(self, doll_name, use_cache=False):
+    def _get_doll_data(self, doll_name, use_cache=False, force=False):
         """
         Internal function to get doll info
 
@@ -351,14 +364,14 @@ class Responder:
         query_url = f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{doll_name}"
 
         raw_doll_data, update, updateable = self._query_wiki(
-            query_url, doll_name, doll_file_directory, use_cache
+            query_url, doll_name, doll_file_directory, use_cache=use_cache, force=force
         )
         if raw_doll_data == None:
             raise DollNotFoundException(f"Doll {doll_name} was not found!")
 
         return raw_doll_data, update, doll_file_directory, updateable
 
-    def _get_doll_skills(self, doll_name, use_cache=False):
+    def _get_doll_skills(self, doll_name, use_cache=False, force=False):
         """
         Internal function to get doll skills
 
@@ -384,7 +397,11 @@ class Responder:
             )
 
             raw_skill_data, update, json_updateable = self._query_wiki(
-                skill_query_url, skill_page, skill_file_directory, use_cache
+                skill_query_url,
+                skill_page,
+                skill_file_directory,
+                use_cache=use_cache,
+                force=force,
             )
             updateable = updateable if not updateable else json_updateable
 
@@ -419,47 +436,54 @@ class Responder:
             pages[page_id][self._TOUCHED_STRING], self._DATE_FORMAT
         )
 
-    def _query_wiki(self, query_url, page_title, cache_directory, use_cache=False):
+    def _query_wiki(
+        self, query_url, page_title, cache_directory, use_cache=False, force=False
+    ):
         """
         Internal function to query the wiki and return the wikitext
         TODO: Check if this actually works for every page of interest
         TESTED TO WORK: Doll data, Doll skills
         """
 
-        try:
-            cache = None
-            with open(cache_directory, "r", encoding="utf8") as cache_file:
-                cache = json.load(cache_file)
-                updateable = cache[self._UPDATEABLE_STRING]
-                fetch_time = datetime.strptime(
-                    cache[self._FETCHED_STRING], self._DATE_FORMAT
-                )
-                days_since = datetime.now(timezone.utc) - fetch_time.replace(
-                    tzinfo=timezone.utc
-                )
-
-                if not updateable or use_cache:
-                    self.log.warning(f"RESPONDER: Force use of cache for {page_title}!")
-                    return cache, False if not updateable else True, updateable
-                elif days_since.days >= 1:
-                    last_edit = self._query_page_last_edit(page_title)
-
-                    if fetch_time > last_edit:
-                        return cache, False, updateable
-                else:
-                    self.log.info(
-                        f"RESPONDER: Data fetched less than a day ago, using cache."
+        if not force:
+            try:
+                cache = None
+                with open(cache_directory, "r", encoding="utf8") as cache_file:
+                    cache = json.load(cache_file)
+                    updateable = cache[self._UPDATEABLE_STRING]
+                    fetch_time = datetime.strptime(
+                        cache[self._FETCHED_STRING], self._DATE_FORMAT
                     )
-                    return cache, False, updateable
+                    days_since = datetime.now(timezone.utc) - fetch_time.replace(
+                        tzinfo=timezone.utc
+                    )
 
-        except FileNotFoundError:
-            self.log.info(f"RESPONDER: Unable to find cache for {page_title}!")
+                    if not updateable or use_cache:
+                        self.log.warning(
+                            f"RESPONDER: Force use of cache for {page_title}!"
+                        )
+                        return cache, False if not updateable else True, updateable
+                    elif days_since.days >= 1:
+                        last_edit = self._query_page_last_edit(page_title)
 
-            if use_cache:
-                self.log.error(f"RESPONDER: use_cache is True, but there is no cache!")
-                raise CacheNotFoundException()
+                        if fetch_time > last_edit:
+                            return cache, False, updateable
+                    else:
+                        self.log.info(
+                            f"RESPONDER: Data fetched less than a day ago, using cache."
+                        )
+                        return cache, False, updateable
 
-            self.log.info("RESPONDER: Allowed to query!")
+            except FileNotFoundError:
+                self.log.info(f"RESPONDER: Unable to find cache for {page_title}!")
+
+                if use_cache:
+                    self.log.error(
+                        f"RESPONDER: use_cache is True, but there is no cache!"
+                    )
+                    raise CacheNotFoundException()
+
+                self.log.info("RESPONDER: Allowed to query!")
 
         response_json = self._query(query_url)
 
