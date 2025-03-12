@@ -84,6 +84,16 @@ class CacheNotFoundException(Exception):
         super().__init__(self.message)
 
 
+class QueryFailedException(Exception):
+    """
+    Exception for when a query fails
+    """
+
+    def __init__(self, message):
+        self.message = f"QueryFailedException: {message}"
+        super().__init__(self.message)
+
+
 class Media(TypedDict):
     """
     Media class definition
@@ -118,6 +128,7 @@ class Responder:
     # Query variables
     _SKILL_START_RANGE = 1
     _SKILL_END_RANGE = 6
+    _GOOD_RESPONSE_CODE = 200
 
     # Embed process variables
     _AFFILIATION_STRING = "Affiliation"
@@ -405,7 +416,7 @@ class Responder:
             page_id = page
 
         return datetime.strptime(
-            pages[page_id][self._TOUCHED_STRING], format=self._DATE_FORMAT
+            pages[page_id][self._TOUCHED_STRING], self._DATE_FORMAT
         )
 
     def _query_wiki(self, query_url, page_title, cache_directory, use_cache=False):
@@ -466,6 +477,12 @@ class Responder:
         }
 
         response = requests.get(query_url, headers=headers)
+
+        if response.status_code != self._GOOD_RESPONSE_CODE:
+            self.log.error(f"RESPONDER: Failed to query {query_url}")
+            self.log.error(f"Reason: {response.reason}")
+            raise QueryFailedException(response.reason)
+
         return json.loads(response.content)
 
     def _get_wikitext(self, json_obj):
