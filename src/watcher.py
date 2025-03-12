@@ -73,12 +73,15 @@ class Watcher:
             include_keys = with_keys == Watcher._INCLUDE_KEYS_STRING
             fixed_doll_name = self._fix_doll_name(doll_name)
             embed = self.responder.get_doll(
-                fixed_doll_name, include_keys,
+                fixed_doll_name,
+                include_keys,
             )
 
             self.log.info(f"WATCHER: Embed Fields: {str(embed.fields)}")
         except Exception as e:
-            self.log.error(f"WATCHER: Received an error when looking up doll information for {doll_name}")
+            self.log.error(
+                f"WATCHER: Received an error when looking up doll information for {doll_name}"
+            )
             self.log.error(f"WATCHER: Exception:\n{e}")
 
             lookup_failure_message = f"""
@@ -109,6 +112,6 @@ class Watcher:
 
         thank you @jiggles8675!
         """
-        return re.sub(r"[A-Za-z]+([A-Za-z]+)?",
-                  lambda i: i.group(0).capitalize(),
-                  doll_name)
+        return re.sub(
+            r"[A-Za-z]+([A-Za-z]+)?", lambda i: i.group(0).capitalize(), doll_name
+        )

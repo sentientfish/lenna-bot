@@ -17,7 +17,7 @@ def main():
     log = logging.getLogger(__name__)
     logging.basicConfig(filename=LOGFILE, encoding="utf-8")
     log.setLevel(logging.INFO)
-    
+
     lenna_bot = Watcher(log, token, CMD_PREFIX)
     lenna_bot.run()
 
