@@ -340,7 +340,7 @@ class Responder:
             )
 
             weapons_data = get_wikitext(raw_weapons_data)
-            if update:
+            if update or self.weapons == None:
                 self.weapons = Weapons(weapons_data)
 
         except Exception as e:
@@ -561,7 +561,7 @@ class Responder:
                     self.log.error(
                         f"RESPONDER: use_cache is True, but there is no cache!"
                     )
-                    raise CacheNotFoundException()
+                    raise CacheNotFoundException(f"Cache lookup of {cache_directory} not found!")
 
                 self.log.info("RESPONDER: Allowed to query!")
 
