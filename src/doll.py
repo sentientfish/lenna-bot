@@ -22,6 +22,13 @@ Fields and their wikitext correspondent:
 
 import wikitextparser as wtp
 
+from parse_utils import (
+    get_base_template,
+    get_template_param_value,
+    simplify,
+    table_data_to_dict,
+)
+
 # Important nodes that the class will try to parse for
 IMPORTANT_NODES = [
     4,
@@ -66,18 +73,15 @@ class Doll:
 
     # Internal variables to parse wikitext
     _BASE_TEMPLATE_INDEX = 0
-    _VALUE_INDEX = 1
-    _WEAK_ICON_STRING = "GFL2WeakIcon"
     _IGNORED_KEYS = [
         "icon",
         "skilllevelcount",
     ]
-    _KEY_INDEX = 0
-    _FIRST_VALUE_INDEX = 1
-    _SIMPLE_DATA_LIST_LENGTH = 2
     _KEY_POSITION_START_RANGE = 1
     _KEY_POSITION_END_RANGE = 3
     _INVALID_KEY_POSITION = 0
+    _UNIVERSAL_KEY_NODE = 11
+    _VALUE_INDEX = 1
 
     class SKILL_PARAMETER_STRING:
         """
@@ -89,17 +93,17 @@ class Doll:
         EXTRA_EFFECT_STRING = "extraeffect"
 
     def __init__(self, doll_data, doll_skills):
-        template = self._get_base_template(doll_data)
+        template = get_base_template(doll_data)
 
-        self.full_name = self._get_template_param_value(template, "fullname")
-        self.role = self._get_template_param_value(template, "role")
-        self.rarity = self._get_template_param_value(template, "rarity")
-        self.affiliation = self._get_template_param_value(template, "affiliation")
-        self.weapon_name = self._get_template_param_value(template, "favweapon")
-        self.signature_weapon = self._get_template_param_value(template, "imprint")
-        self.weapon_weakness = self._get_template_param_value(template, "wepweakness")
-        self.phase_weakness = self._get_template_param_value(template, "phaseweakness")
-        self.gfl_name = self._get_template_param_value(template, "GFL")
+        self.full_name = get_template_param_value(template, "fullname")
+        self.role = get_template_param_value(template, "role")
+        self.rarity = get_template_param_value(template, "rarity")
+        self.affiliation = get_template_param_value(template, "affiliation")
+        self.weapon_name = get_template_param_value(template, "favweapon")
+        self.signature_weapon = get_template_param_value(template, "imprint")
+        self.weapon_weakness = get_template_param_value(template, "wepweakness")
+        self.phase_weakness = get_template_param_value(template, "phaseweakness")
+        self.gfl_name = get_template_param_value(template, "GFL")
 
         self.nodes = self._get_nodes(template)
         self.skills = self._get_skills(doll_skills)
@@ -108,23 +112,22 @@ class Doll:
         """
         Internal function to get node from wikitext template
         """
-
         name = None
         if is_key:
             name_string = f"Node{node_position}name"
-            if key_position != Doll._INVALID_KEY_POSITION:
+            if key_position != self._INVALID_KEY_POSITION:
                 name_string += f"{key_position}"
-            name_wikitext = self._get_template_param_value(template, name_string)
+            name_wikitext = get_template_param_value(template, name_string)
 
-            name_template = self._get_base_template(name_wikitext)
-            name = name_template.arguments[1].value
+            name_template = get_base_template(name_wikitext)
+            name = name_template.arguments[self._VALUE_INDEX].value
 
         desc_string = f"Node{node_position}desc"
-        if key_position != Doll._INVALID_KEY_POSITION:
+        if key_position != self._INVALID_KEY_POSITION:
             desc_string += f"{key_position}"
 
-        desc = self._get_template_param_value(template, desc_string)
-        desc = self._simplify(desc)
+        desc = get_template_param_value(template, desc_string)
+        desc = simplify(desc)
         node = Node(name, desc, node_position)
 
         return node
@@ -137,11 +140,11 @@ class Doll:
         nodes = []
         for important_node in IMPORTANT_NODES:
             for i in range(
-                Doll._KEY_POSITION_START_RANGE, Doll._KEY_POSITION_END_RANGE
+                self._KEY_POSITION_START_RANGE, self._KEY_POSITION_END_RANGE
             ):
                 key_position = i
-                if important_node == 11:
-                    key_position = Doll._INVALID_KEY_POSITION
+                if important_node == self._UNIVERSAL_KEY_NODE:
+                    key_position = self._INVALID_KEY_POSITION
 
                 node = self._get_node(
                     template, important_node, is_key=True, key_position=key_position
@@ -164,86 +167,18 @@ class Doll:
 
         return skills
 
-    def _table_data_to_dict(self, table_data):
-        """
-        Internal function to convert wikitable data into a dictionary
-        """
-
-        table_dictionary = {}
-        for data in table_data:
-            key = data[Doll._KEY_INDEX]
-            data_list_length = len(data)
-
-            value = ""
-            if data_list_length > Doll._SIMPLE_DATA_LIST_LENGTH:
-                value = []
-
-                for i in range(Doll._FIRST_VALUE_INDEX, data_list_length):
-                    data_val = data[i]
-                    value.append(data_val)
-            else:
-                value = data[Doll._FIRST_VALUE_INDEX]
-
-            table_dictionary[key] = value
-
-        return table_dictionary
-
-    def _simplify(self, wikitext):
-        """
-        Internal function to simply the wikitext and remove all templates
-        and wikilinks
-        """
-
-        wikitext = self._remove_wikilinks(wikitext)
-        wikitext = self._remove_templates(wikitext)
-
-        return wikitext
-
-    def _remove_wikilinks(self, wikitext):
-        """
-        Internal function to simplify wikilinks in wikitext
-        Shortens the wikilink into its template value
-        """
-
-        wikilinks = wtp.parse(wikitext).wikilinks
-
-        for wikilink in wikilinks:
-            wikilink_str = str(wikilink)
-            wikitext = wikitext.replace(wikilink_str, wikilink.text)
-
-        return wikitext
-
-    def _remove_templates(self, wikitext):
-        """
-        Internal function to simplify templates in wikitext
-        Shortens the template into its value
-        """
-
-        templates = wtp.parse(wikitext).templates
-
-        for template in templates:
-            template_str = str(template)
-
-            template_value = ""
-            if Doll._WEAK_ICON_STRING not in template:
-                template_value = template.arguments[Doll._VALUE_INDEX].value
-
-            wikitext = wikitext.replace(template_str, template_value)
-
-        return wikitext
-
     def _parse_skill_table(self, skill_data):
         """
         Internal function to parse the skill table
         """
 
         table_data = wtp.Table(skill_data).data(span=False)
-        skill_table_dictionary = self._table_data_to_dict(table_data)
+        skill_table_dictionary = table_data_to_dict(table_data)
 
         parsed_skill_dictionary = {}
         variable_skill_parameters = []
         for key in skill_table_dictionary:
-            if key in Doll._IGNORED_KEYS:
+            if key in self._IGNORED_KEYS:
                 continue
 
             value = skill_table_dictionary[key]
@@ -252,7 +187,7 @@ class Doll:
                 case self.SKILL_PARAMETER_STRING.NAME_STRING:
                     parsed_skill_dictionary[key] = value
                 case self.SKILL_PARAMETER_STRING.TEXT_STRING:
-                    skill_text = self._simplify(value)
+                    skill_text = simplify(value)
 
                     parsed_skill_dictionary[key] = skill_text
                 case self.SKILL_PARAMETER_STRING.EXTRA_EFFECT_STRING:
@@ -263,7 +198,7 @@ class Doll:
                         if extra_effect == "":
                             continue
 
-                        cleaned_extra_effect = self._simplify(extra_effect)
+                        cleaned_extra_effect = simplify(extra_effect)
                         extra_effects_list.append(cleaned_extra_effect)
 
                     parsed_skill_dictionary[key] = extra_effects_list
@@ -285,7 +220,7 @@ class Doll:
             parameter_value = ""
 
             for value in parameter_list:
-                value = self._simplify(value)
+                value = simplify(value)
                 parameter_value += f"{value}/"
 
             parameter_value = parameter_value[:-1]
@@ -303,17 +238,3 @@ class Doll:
         )
 
         return skill
-
-    def _get_base_template(self, wikitext):
-        """
-        Internal function to get the base template of a wikitext
-        """
-
-        return wtp.parse(wikitext).templates[Doll._BASE_TEMPLATE_INDEX]
-
-    def _get_template_param_value(self, template, param_name):
-        """
-        Internal function to get the value of a parameter
-        """
-
-        return template.get_arg(param_name).value
