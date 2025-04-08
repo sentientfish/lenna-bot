@@ -10,16 +10,20 @@ CMD_PREFIX = "!"
 
 
 def main():
-    # Environment Setup
-    load_dotenv()
-    token = os.getenv("DISCORD_TOKEN")
+    try:
+        # Environment Setup
+        load_dotenv()
+        token = os.getenv("DISCORD_TOKEN")
 
-    log = logging.getLogger(__name__)
-    logging.basicConfig(filename=LOGFILE, encoding="utf-8")
-    log.setLevel(logging.INFO)
+        log = logging.getLogger(__name__)
+        logging.basicConfig(filename=LOGFILE, encoding="utf-8")
+        log.setLevel(logging.INFO)
 
-    lenna_bot = Watcher(log, token, CMD_PREFIX)
-    lenna_bot.run()
+        lenna_bot = Watcher(log, token, CMD_PREFIX)
+        lenna_bot.run()
+    except KeyboardInterrupt:
+        # Gracefully handle a keyboard interrupt
+        lenna_bot.close()
 
 
 if __name__ == "__main__":

@@ -141,6 +141,10 @@ class Responder:
     _SKILL_START_RANGE = 1
     _SKILL_END_RANGE = 6
     _GOOD_RESPONSE_CODE = 200
+    _HEADERS = {
+        "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
+        "From": "sentientfishsentient@gmail.com",
+    }
 
     # Embed process variables
     _BREAK_TAG = "<br>"
@@ -152,6 +156,13 @@ class Responder:
         self.media_dict = self._load_media()
         self.log = log
         self.weapons = None
+        self.session = requests.Session()
+
+        self.session.headers.update(self._HEADERS)
+
+    def close(self):
+        self.log.info("RESPONDER: Shutting down")
+        self.session.close()
 
     def get_media(self, media_name):
         """
@@ -561,7 +572,9 @@ class Responder:
                     self.log.error(
                         f"RESPONDER: use_cache is True, but there is no cache!"
                     )
-                    raise CacheNotFoundException(f"Cache lookup of {cache_directory} not found!")
+                    raise CacheNotFoundException(
+                        f"Cache lookup of {cache_directory} not found!"
+                    )
 
                 self.log.info("RESPONDER: Allowed to query!")
 
@@ -575,12 +588,10 @@ class Responder:
         """
         self.log.info(f"RESPONDER: Querying {query_url}")
 
-        headers = {
-            "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
-            "From": "sentientfishsentient@gmail.com",
-        }
+        req = requests.Request("GET", query_url)
+        prepared_req = self.session.prepare_request(req)
 
-        response = requests.get(query_url, headers=headers)
+        response = self.session.send(prepared_req)
 
         if response.status_code != self._GOOD_RESPONSE_CODE:
             self.log.error(f"RESPONDER: Failed to query {query_url}")

@@ -45,6 +45,10 @@ class Watcher:
         self._add_command("wlookup", Watcher.wlookup)
         self._add_command("cwlookup", Watcher.cwlookup)
 
+    def close(self):
+        log.info("WATCHER: Shutting down")
+        self.responder.close()
+
     def _add_command(self, name, func):
         """
         Helper function to add the command to the bot
