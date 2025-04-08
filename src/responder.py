@@ -205,7 +205,7 @@ class Responder:
             update_cache = update or any(update_list)
 
         except Exception as e:
-            if isinstance(e, CacheNotFoundException) or isinstance(e, QueryFailedException):
+            if isinstance(e, CacheNotFoundException):
                 raise
             elif force:
                 self.log.error(f"RESPONDER: Force query failed! Stopping lookup...")
