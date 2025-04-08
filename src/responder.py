@@ -99,7 +99,7 @@ class QueryFailedException(Exception):
         super().__init__(self.message)
 
 
-class ForceQueryFailedException(Exception):
+class ForceQueryFailedException(QueryFailedException):
     """
     Exception for when a force query fails
     """
@@ -124,7 +124,7 @@ class Responder:
     """
 
     # Media-related variables
-    _DATA_DIRECTORY = "../data/"
+    _DATA_DIRECTORY = "../data"
     _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
     _MEDIA_FILE = "media.json"
     _WEAPONS_CACHE_FILE = "weapons.json"
@@ -145,6 +145,7 @@ class Responder:
         "User-agent": "LennaBot/1.0 (sentientfishsentient@gmail.com)",
         "From": "sentientfishsentient@gmail.com",
     }
+    _ERR_STRING = "error"
 
     # Embed process variables
     _BREAK_TAG = "<br>"
@@ -420,7 +421,7 @@ class Responder:
         """
 
         try:
-            with open(f"{self._DATA_DIRECTORY}{self._MEDIA_FILE}", "r") as media_file:
+            with open(f"{self._DATA_DIRECTORY}/{self._MEDIA_FILE}", "r") as media_file:
 
                 media_dict: Media = json.load(media_file)
 
@@ -592,13 +593,21 @@ class Responder:
         prepared_req = self.session.prepare_request(req)
 
         response = self.session.send(prepared_req)
+        content = json.loads(response.content)
 
-        if response.status_code != self._GOOD_RESPONSE_CODE:
+        reason = None
+        if (response.status_code != self._GOOD_RESPONSE_CODE):
+            reason = response.reason
+        elif  (self._ERR_STRING in content):
+            reason = content[self._ERR_STRING]["info"]
+        
+        if reason != None:
             self.log.error(f"RESPONDER: Failed to query {query_url}")
-            self.log.error(f"Reason: {response.reason}")
-            raise QueryFailedException(response.reason)
+            self.log.error(f"Reason: {reason}")
+            
+            raise QueryFailedException(reason)
 
-        return json.loads(response.content)
+        return content
 
     def _write(self, payload, filename):
         """
