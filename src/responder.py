@@ -29,7 +29,7 @@ IOPWIKI_WEAPONS_PAGE = "GFL2_Weapons"
 IOPWIKI_STATUS_EFFECTS_PAGE = "GFL2_Status_Effects"
 
 SPECIAL_NAMES = {
-    "Centaureissi": "Centauerissi_(GFL2)",
+    "Centaureissi": "Centaureissi_(GFL2)",
     "Daiyan": "Daiyan_(GFL2)",
     "Dushevnaya": "Dushevnaya_(GFL2)",
     "Jiangyu": "Jiangyu_(GFL2)",
@@ -300,11 +300,12 @@ class Responder:
                 inline=False,
             )
 
-            embed.add_field(
-                name="Signature Weapon",
-                value=doll.signature_weapon,
-                inline=False,
-            )
+            if doll.signature_weapon != None:
+                embed.add_field(
+                    name="Signature Weapon",
+                    value=doll.signature_weapon,
+                    inline=False,
+                )
 
             embed.add_field(
                 name="Weaknesses",
