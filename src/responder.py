@@ -17,6 +17,7 @@ from typing import TypedDict
 
 from doll import Doll
 from weapons import Weapons
+from status_effects import StatusEffects
 from parse_utils import (
     get_wikitext,
 )
@@ -25,6 +26,7 @@ IOPWIKI_API_URL = "https://iopwiki.com/api.php"
 IOPWIKI_DATA_FETCH_PARAM = "?action=parse&prop=wikitext&format=json&redirects=1&page="
 IOPWIKI_INFO_FETCH_PARAM = "?action=query&format=json&prop=info&titles="
 IOPWIKI_WEAPONS_PAGE = "GFL2_Weapons"
+IOPWIKI_STATUS_EFFECTS_PAGE = "GFL2_Status_Effects"
 
 SPECIAL_NAMES = {
     "Centaureissi": "Centauerissi_(GFL2)",
@@ -79,6 +81,26 @@ class SkillNotFoundException(Exception):
         super().__init__(self.message)
 
 
+class WeaponNotFoundException(Exception):
+    """
+    Exception for when weapon query returned a failure
+    """
+
+    def __init__(self, message):
+        self.message = f"WeaponNotFoundException: {message}"
+        super().__init__(self.message)
+
+
+class StatusEffectNotFoundException(Exception):
+    """
+    Exception for when status effect query returned a failure
+    """
+
+    def __init__(self, message):
+        self.message = f"StatusEffectNotFoundException: {message}"
+        super().__init__(self.message)
+
+
 class CacheNotFoundException(Exception):
     """
     Exception for when cache lookup returned a failure
@@ -128,6 +150,7 @@ class Responder:
     _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
     _MEDIA_FILE = "media.json"
     _WEAPONS_CACHE_FILE = "weapons.json"
+    _STATUS_EFFECTS_CACHE_FILE = "status_effects.json"
     _FETCHED_STRING = "fetched"
     _UPDATEABLE_STRING = "updateable"
 
@@ -157,6 +180,7 @@ class Responder:
         self.media_dict = self._load_media()
         self.log = log
         self.weapons = None
+        self.status_effects = None
         self.session = requests.Session()
 
         self.session.headers.update(self._HEADERS)
@@ -208,7 +232,9 @@ class Responder:
             if isinstance(e, CacheNotFoundException):
                 raise
             elif force:
-                self.log.error(f"RESPONDER: Force query failed! Stopping lookup...")
+                self.log.error(
+                    f"RESPONDER: Forced doll query failed! Stopping lookup..."
+                )
                 raise
 
             # Doll was not parseable, use cache
@@ -238,8 +264,8 @@ class Responder:
 
         if update_cache:
             self._update(raw_doll_data, doll_file_directory, updateable)
-            for raw_doll_skill, skill_directory, update_skill in zip(
-                raw_doll_skills, skill_directories, update_list
+            for raw_doll_skill, skill_directory in zip(
+                raw_doll_skills, skill_directories
             ):
                 self._update(raw_doll_skill, skill_directory, updateable)
 
@@ -307,9 +333,10 @@ class Responder:
 
             if skill_extras:
                 for extra in skill_extras:
+                    extra_desc = extra.replace(self._BREAK_TAG, self._NEWLINE_STRING)
                     embed.add_field(
                         name="",
-                        value=f"{self._ARROW_EMOJI_STRING}{extra}{self._NEWLINE_STRING}",
+                        value=f"{self._ARROW_EMOJI_STRING}{extra_desc}{self._NEWLINE_STRING}",
                         inline=False,
                     )
 
@@ -359,7 +386,9 @@ class Responder:
             if isinstance(e, CacheNotFoundException):
                 raise
             elif force:
-                self.log.error(f"RESPONDER: Force query failed! Stopping lookup...")
+                self.log.error(
+                    f"RESPONDER: Forced weapon query failed! Stopping lookup..."
+                )
                 raise
 
             # Weapons page was not parseable, use cache
@@ -388,7 +417,7 @@ class Responder:
 
         weapon = self.weapons.get_weapon(weapon_name)
         if weapon == None:
-            pass
+            raise WeaponNotFoundException(f"Weapon {weapon_name} was not found!")
 
         embed = Embed(
             title=weapon.name,
@@ -398,7 +427,11 @@ class Responder:
 
         if not updateable:
             embed.set_footer(
-                text=self._WEAPON_WARNING_FOOTER,
+                text=dedent(
+                    """
+                !!!\nShikikan, Lenna failed to fetch data for this weapon, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!",
+                """
+                )
             )
 
         embed.add_field(name="Imprint", value=weapon.imprint_boost, inline=False)
@@ -412,6 +445,90 @@ class Responder:
         embed.add_field(name="Trait", value=weapon.trait, inline=False)
 
         embed.add_field(name="Description", value=weapon.description, inline=False)
+
+        return embed
+
+    def get_status_effect(self, status_effect_name, use_cache=False, force=False):
+        """
+        Function to fetch status effect
+        Returns a discord embed
+        """
+        updateable = True
+        status_effects_cache_directory = (
+            f"{self._CACHE_DIRECTORY}{self._STATUS_EFFECTS_CACHE_FILE}"
+        )
+        status_effects_query_url = (
+            f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{IOPWIKI_STATUS_EFFECTS_PAGE}"
+        )
+
+        try:
+            raw_status_effects_data, update, updateable = self._query_wiki(
+                status_effects_query_url,
+                IOPWIKI_WEAPONS_PAGE,
+                status_effects_cache_directory,
+                use_cache=use_cache,
+                force=force,
+            )
+
+            status_effects_data = get_wikitext(raw_status_effects_data)
+            if update or self.status_effects == None:
+                self.status_effects = StatusEffects(status_effects_data)
+
+        except Exception as e:
+            if isinstance(e, CacheNotFoundException):
+                raise
+            elif force:
+                self.log.error(
+                    f"RESPONDER: Forced status effect query failed! Stopping lookup..."
+                )
+                raise
+                # Weapons page was not parseable, use cache
+
+            self.log.error(
+                f"RESPONDER: Ran into an error when looking up status effect information for {status_effect_name}"
+            )
+            self.log.error(f"RESPONDER: Exception:\n{e}")
+            self.log.info("RESPONDER: Attempting to use cache...")
+
+            # If we reach here, that definitely means something went wrong
+            # we want to update our cache if we can so we do not query it in the future
+            update = True
+            use_cache = True
+            updateable = False
+
+            raw_status_effects_data, update, updateable = self._query_wiki(
+                status_effects_query_url,
+                IOPWIKI_WEAPONS_PAGE,
+                status_effects_cache_directory,
+                use_cache=use_cache,
+                force=force,
+            )
+
+        if update:
+            self._update(
+                raw_status_effects_data, status_effects_cache_directory, updateable
+            )
+
+        effect = self.status_effects.get_status_effect(status_effect_name)
+        if effect == None:
+            raise StatusEffectNotFoundException(
+                f"Status effect {status_effect_name} was not found!"
+            )
+
+        embed = Embed(
+            title=status_effect_name,
+            description=effect,
+            color=Color.orange(),
+        )
+
+        if not updateable:
+            embed.set_footer(
+                text=dedent(
+                    """
+                !!!\nShikikan, Lenna failed to fetch data for this status effect, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!",
+                """
+                )
+            )
 
         return embed
 
@@ -596,15 +713,15 @@ class Responder:
         content = json.loads(response.content)
 
         reason = None
-        if (response.status_code != self._GOOD_RESPONSE_CODE):
+        if response.status_code != self._GOOD_RESPONSE_CODE:
             reason = response.reason
-        elif  (self._ERR_STRING in content):
+        elif self._ERR_STRING in content:
             reason = content[self._ERR_STRING]["info"]
-        
+
         if reason != None:
             self.log.error(f"RESPONDER: Failed to query {query_url}")
             self.log.error(f"Reason: {reason}")
-            
+
             raise QueryFailedException(reason)
 
         return content
