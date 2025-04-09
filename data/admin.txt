@@ -1,0 +1,2 @@
+# Lists the administrative roles that some commands require
+Bot Admin
