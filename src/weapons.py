@@ -9,8 +9,6 @@ from enum import Enum
 import wikitextparser as wtp
 
 from parse_utils import (
-    get_base_template,
-    get_template_param_value,
     simplify,
     table_data_to_dict,
 )
@@ -66,22 +64,24 @@ class Weapons:
         return self.weapons.get(weapon_name, None)
 
     def _parse_weapons_wikitable(self, weapons_tables_json):
+        """
+        Parses weapons table into a dictionary of weapon name to Weapon object
+        returns said dictionary
+        """
         weapons_tables = wtp.parse(weapons_tables_json).tables
 
-        """
-        Maps WeaponType enums to a dictionary of weapons of that type
-        nested dictionary follows the format:
-        key = name
-        value[0] = grade
-        value[1] = icon
-        value[2] = description
-        value[3] = skill
-        value[4] = trait
-        value[5] = imprint
-        value[6] = source/unlock method
-        value[7] = release CN
-        value[8] = release GL
-        """
+        # First, map WeaponType enums to a dictionary of weapons of that type.
+        # The wikitext nested dictionary follows the format:
+        # key = name
+        # value[0] = grade
+        # value[1] = icon
+        # value[2] = description
+        # value[3] = skill
+        # value[4] = trait
+        # value[5] = imprint
+        # value[6] = source/unlock method
+        # value[7] = release CN
+        # value[8] = release GL
         weapons_dictionaries = {}
         weapons_type_enum_iterator = 0
         for weapons_table in weapons_tables:

@@ -44,9 +44,10 @@ class Watcher:
         self._add_command("flookup", Watcher.flookup)
         self._add_command("wlookup", Watcher.wlookup)
         self._add_command("cwlookup", Watcher.cwlookup)
+        self._add_command("define", Watcher.define)
 
     def close(self):
-        log.info("WATCHER: Shutting down")
+        self.log.info("WATCHER: Shutting down")
         self.responder.close()
 
     def _add_command(self, name, func):
@@ -108,9 +109,7 @@ class Watcher:
         For debugging, forces cache lookup
         """
         weapon_name = " ".join(args)
-        fixed_weapon_name = self._fix_name(weapon_name)
-
-        embed = self._weapon_lookup(fixed_weapon_name, use_cache=True)
+        embed = self._weapon_lookup(weapon_name, use_cache=True)
 
         await ctx.send(embed=embed)
 
@@ -119,9 +118,17 @@ class Watcher:
         Looks up weapon information
         """
         weapon_name = " ".join(args)
-        fixed_weapon_name = self._fix_name(weapon_name)
+        embed = self._weapon_lookup(weapon_name)
 
-        embed = self._weapon_lookup(fixed_weapon_name)
+        await ctx.send(embed=embed)
+
+    async def define(self, ctx, *args):
+        """
+        Defines a status effect
+        """
+
+        status_effect_name = " ".join(args)
+        embed = self._status_effect_lookup(status_effect_name)
 
         await ctx.send(embed=embed)
 
@@ -189,13 +196,47 @@ class Watcher:
 
         return embed
 
+    def _status_effect_lookup(self, status_effect_name, force=False, use_cache=False):
+        embed = None
+        try:
+            fixed_status_effect_name = self._fix_name(status_effect_name)
+            fixed_status_effect_name = self._capitalize_roman_numerals(
+                fixed_status_effect_name
+            )
+
+            embed = self.responder.get_status_effect(
+                fixed_status_effect_name,
+                force=force,
+                use_cache=use_cache,
+            )
+
+            self.log.info(f"WATCHER: Status Effect Embed Fields: {str(embed.fields)}")
+        except Exception as e:
+            self.log.error(
+                f"WATCHER: Received an error when looking up status effect information for {status_effect_name}"
+            )
+            self.log.error(f"WATCHER: Exception:\n{e}")
+
+            lookup_failure_message = f"""
+                Eh!? Lenna doesn't know {status_effect_name}, are you sure you typed the status effect name correctly, Shikikan?
+                If you think this is a mistake, please talk to @aguren ~
+            """
+
+            embed = discord.Embed(
+                title="Status Effect Lookup Failure",
+                description=dedent(lookup_failure_message),
+                color=discord.Color.red(),
+            )
+
+        return embed
+
     def run(self):
         """
         Runs the bot inside Watcher
         """
         self.bot.run(self.token)
 
-    def _fix_name(self, doll_name):
+    def _fix_name(self, name):
         """
         Fixes the name to properly capitalize them
         Returns the fixed name
@@ -204,6 +245,15 @@ class Watcher:
 
         thank you @jiggles8675!
         """
-        return re.sub(
-            r"[A-Za-z]+([A-Za-z]+)?", lambda i: i.group(0).capitalize(), doll_name
-        )
+        return re.sub(r"[A-Za-z]+([A-Za-z]+)?", lambda i: i.group(0).capitalize(), name)
+
+    def _capitalize_roman_numerals(self, string):
+        """
+        Fixes the string to capitalize roman numerals
+
+        Adapted from chatgpt because @aguren really hates regex (sorry)
+        """
+
+        roman_numeral_regex = r"\b[MCDXLIVmcdxliv]+\b"
+
+        return re.sub(roman_numeral_regex, lambda i: i.group(0).upper(), string)
