@@ -55,8 +55,6 @@ class Watcher:
         self._add_command("fdoll", Watcher.fdoll)
         self._add_command("keys", Watcher.keys)
         self._add_command("fkeys", Watcher.fkeys)
-        self._add_command("fulldoll", Watcher.fulldoll)
-        self._add_command("ffulldoll", Watcher.ffulldoll)
         self._add_command("weapon", Watcher.weapon)
         self._add_command("mweapon", Watcher.mweapon)
         self._add_command("fweapon", Watcher.fweapon)
@@ -136,25 +134,6 @@ class Watcher:
             embed = self._doll_lookup(
                 doll_name, with_doll=False, with_keys=True, force=False
             )
-        else:
-            embed = self.create_unallowed_embed()
-
-        await ctx.send(embed=embed)
-
-    async def fulldoll(self, ctx, doll_name):
-        """
-        Looks up doll information and returns full information
-        """
-        embed = self._doll_lookup(doll_name, with_keys=True, force=False)
-
-        await ctx.send(embed=embed)
-
-    async def ffulldoll(self, ctx, doll_name):
-        """
-        Looks up doll information and returns full information
-        """
-        if self.allowed(ctx):
-            embed = self._doll_lookup(doll_name, with_keys=True, force=False)
         else:
             embed = self.create_unallowed_embed()
 
