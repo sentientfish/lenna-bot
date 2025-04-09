@@ -201,7 +201,9 @@ class Responder:
 
         return media_link
 
-    def get_doll(self, doll_name, with_keys=False, use_cache=False, force=False):
+    def get_doll(
+        self, doll_name, with_doll=True, with_keys=False, use_cache=False, force=False
+    ):
         """
         Function to fetch doll information
         Returns a discord embed
@@ -284,61 +286,64 @@ class Responder:
                 )
             )
 
-        embed.add_field(
-            name="",
-            value=f"{doll.rarity[:-1]}{self._STAR_EMOJI_STRING} {doll.role}",
-            inline=True,
-        )
-
-        embed.add_field(
-            name="Affiliation",
-            value=doll.affiliation,
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Signature Weapon",
-            value=doll.signature_weapon,
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Weaknesses",
-            value=f"{doll.weapon_weakness}{doll.phase_weakness}",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Skills",
-            value="",
-            inline=False,
-        )
-
-        for skill in doll.skills:
-            skill_name = skill.name
-            skill_desc = skill.desc.replace(self._BREAK_TAG, self._NEWLINE_STRING)
-            skill_extras = skill.extra_effects
-
-            embed.add_field(
-                name=skill_name,
-                value=skill_desc,
-                inline=False,
-            )
-
+        if with_doll:
             embed.add_field(
                 name="",
-                value="Upgrade effect(s):",
+                value=f"{doll.rarity[:-1]}{self._STAR_EMOJI_STRING} {doll.role}",
+                inline=True,
+            )
+
+            embed.add_field(
+                name="Affiliation",
+                value=doll.affiliation,
                 inline=False,
             )
 
-            if skill_extras:
-                for extra in skill_extras:
-                    extra_desc = extra.replace(self._BREAK_TAG, self._NEWLINE_STRING)
-                    embed.add_field(
-                        name="",
-                        value=f"{self._ARROW_EMOJI_STRING}{extra_desc}{self._NEWLINE_STRING}",
-                        inline=False,
-                    )
+            embed.add_field(
+                name="Signature Weapon",
+                value=doll.signature_weapon,
+                inline=False,
+            )
+
+            embed.add_field(
+                name="Weaknesses",
+                value=f"{doll.weapon_weakness}{doll.phase_weakness}",
+                inline=False,
+            )
+
+            embed.add_field(
+                name="Skills",
+                value="",
+                inline=False,
+            )
+
+            for skill in doll.skills:
+                skill_name = skill.name
+                skill_desc = skill.desc.replace(self._BREAK_TAG, self._NEWLINE_STRING)
+                skill_extras = skill.extra_effects
+
+                embed.add_field(
+                    name=skill_name,
+                    value=skill_desc,
+                    inline=False,
+                )
+
+                embed.add_field(
+                    name="",
+                    value="Upgrade effect(s):",
+                    inline=False,
+                )
+
+                if skill_extras:
+                    for extra in skill_extras:
+                        extra_desc = extra.replace(
+                            self._BREAK_TAG, self._NEWLINE_STRING
+                        )
+                        embed.add_field(
+                            name="",
+                            value=f"{self._ARROW_EMOJI_STRING}{extra_desc}{self._NEWLINE_STRING}",
+                            inline=False,
+                        )
 
         if with_keys:
             embed.add_field(
