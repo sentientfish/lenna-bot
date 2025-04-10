@@ -5,6 +5,7 @@ Class that basically serves as the bot
 It watches channel for prompts and responds as needed
 """
 
+import random
 import re
 from textwrap import dedent
 
@@ -14,7 +15,8 @@ from discord.ext import commands
 
 from responder import Responder
 
-LENA_BINGO_VIDEO = "lenna_bingo_video"
+LENNA_BINGO_VIDEO = "lenna_bingo_video"
+LEVA_BINGO_VIDEO = "leva_bingo_video"
 ADMIN_ROLES_FILE = "../data/admin.txt"
 
 
@@ -78,7 +80,12 @@ class Watcher:
         """
         Bingo! uwu
         """
-        bingo_video = self.responder.get_media(LENA_BINGO_VIDEO)
+        coinflip = random.randint(0, 1)
+        if coinflip:
+            bingo_video = self.responder.get_media(LENNA_BINGO_VIDEO)
+        else:
+            bingo_video = self.responder.get_media(LEVA_BINGO_VIDEO)
+
         await ctx.send(bingo_video)
 
     async def echo(self, ctx, *args):
