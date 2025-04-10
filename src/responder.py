@@ -29,7 +29,7 @@ IOPWIKI_WEAPONS_PAGE = "GFL2_Weapons"
 IOPWIKI_STATUS_EFFECTS_PAGE = "GFL2_Status_Effects"
 
 SPECIAL_NAMES = {
-    "Centaureissi": "Centauerissi_(GFL2)",
+    "Centaureissi": "Centaureissi_(GFL2)",
     "Daiyan": "Daiyan_(GFL2)",
     "Dushevnaya": "Dushevnaya_(GFL2)",
     "Jiangyu": "Jiangyu_(GFL2)",
@@ -148,6 +148,7 @@ class Responder:
     # Media-related variables
     _DATA_DIRECTORY = "../data"
     _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
+    _HEADERS_FILE = "headers.json"
     _MEDIA_FILE = "media.json"
     _WEAPONS_CACHE_FILE = "weapons.json"
     _STATUS_EFFECTS_CACHE_FILE = "status_effects.json"
@@ -183,7 +184,7 @@ class Responder:
         self.status_effects = None
         self.session = requests.Session()
 
-        self.session.headers.update(self._HEADERS)
+        self.session.headers.update(self._get_headers())
 
     def close(self):
         self.log.info("RESPONDER: Shutting down")
@@ -299,11 +300,12 @@ class Responder:
                 inline=False,
             )
 
-            embed.add_field(
-                name="Signature Weapon",
-                value=doll.signature_weapon,
-                inline=False,
-            )
+            if doll.signature_weapon != None:
+                embed.add_field(
+                    name="Signature Weapon",
+                    value=doll.signature_weapon,
+                    inline=False,
+                )
 
             embed.add_field(
                 name="Weaknesses",
@@ -627,6 +629,15 @@ class Responder:
             skill_directories.append(skill_file_directory)
 
         return raw_skill_list, update_list, skill_directories, updateable
+
+    def _get_headers(self):
+        """
+        Prepares the query headers
+        """
+        headers_file_dir = f"{self._DATA_DIRECTORY}/{self._HEADERS_FILE}"
+
+        with open(headers_file_dir, "r") as headers_file:
+            return dict(json.load(headers_file))
 
     def _query_page_last_edit(self, page_title):
         """

@@ -82,6 +82,7 @@ class Doll:
     _INVALID_KEY_POSITION = 0
     _UNIVERSAL_KEY_NODE = 11
     _VALUE_INDEX = 1
+    _STANDARD_RARITY = "4"
 
     class SKILL_PARAMETER_STRING:
         """
@@ -100,10 +101,13 @@ class Doll:
         self.rarity = get_template_param_value(template, "rarity")
         self.affiliation = get_template_param_value(template, "affiliation")
         self.weapon_name = get_template_param_value(template, "favweapon")
-        self.signature_weapon = get_template_param_value(template, "imprint")
         self.weapon_weakness = get_template_param_value(template, "wepweakness")
         self.phase_weakness = get_template_param_value(template, "phaseweakness")
         self.gfl_name = get_template_param_value(template, "GFL")
+
+        self.signature_weapon = None
+        if self._STANDARD_RARITY not in self.rarity:
+            self.signature_weapon = get_template_param_value(template, "imprint")
 
         self.nodes = self._get_nodes(template)
         self.skills = self._get_skills(doll_skills)
