@@ -28,6 +28,7 @@ class StatusEffects:
         """
         Gets the effect given the status effect name
         """
+
         return self.status_effects.get(status_effect_name, None)
 
     def _parse_status_effects_wikitext(self, status_effects_json):

@@ -194,6 +194,7 @@ class Responder:
         """
         Function to fetch the media needed
         """
+
         media_link = self.media_dict.get(media_name, None)
         if media_link == None:
             raise InvalidMediaException(
@@ -202,6 +203,85 @@ class Responder:
 
         return media_link
 
+    def get_help_embed(self):
+        """
+        Function to prepare a help embed
+        """
+
+        embed = Embed(
+            title="Available Commands",
+            description=f"",
+            color=Color.orange(),
+        )
+
+        embed.add_field(
+            name="!bingo",
+            value=f"(Pseudo-)Randomly sends Lenna's or Leva's bingo video! very cute!!!",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!echo",
+            value=f"Lenna will repeat what Shikikan says!",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!doll <doll_name>",
+            value=f"Looks up doll information corresponding to doll_name\nexample: `!doll makiatto`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!mdoll <doll_name>",
+            value=f"Looks up doll information corresponding to doll_name using cache\nexample: `!mdoll makiatto`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!fdoll <doll_name>",
+            value=f"Looks up doll information corresponding to doll_name by forcefully querying the wiki. Requires admin roles\nexample: `!fdoll makiatto`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!keys <doll_name>",
+            value=f"Looks up doll neural keys information corresponding to doll_name\nexample: `!keys makiatto`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!fkeys <doll_name>",
+            value=f"Looks up doll neural keys information corresponding to doll_name by forcefully querying the wiki. Requires admin roles\nexample: `!fkeys makiatto`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!weapon <weapon_name>",
+            value=f"Looks up weapon information corresponding to weapon_name\nexample: `!weapon bittersweet caramel`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!mweapon <weapon_name>",
+            value=f"Looks up weapon information corresponding to weapon_name using cache\nexample: `!mweapon bittersweet caramel`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!fweapon <weapon_name>",
+            value=f"Looks up weapon information corresponding to weapon_name by forcefully querying the wiki. Requires admin roles\nexample: `!fweapon bittersweet caramel`",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!define <status_effect_name>",
+            value=f"Looks up status effect information corresponding to status_effect_name\nexample: `!define acid corrosion ii`",
+            inline=False,
+        )
+
+        return embed
+
     def get_doll(
         self, doll_name, with_doll=True, with_keys=False, use_cache=False, force=False
     ):
@@ -209,6 +289,7 @@ class Responder:
         Function to fetch doll information
         Returns a discord embed
         """
+
         updateable = True
         update_cache = False
         try:
@@ -371,6 +452,7 @@ class Responder:
         Function to fetch weapon information
         Returns a discord embed
         """
+
         updateable = True
         weapons_cache_directory = f"{self._CACHE_DIRECTORY}{self._WEAPONS_CACHE_FILE}"
         weapons_query_url = (
@@ -460,6 +542,7 @@ class Responder:
         Function to fetch status effect
         Returns a discord embed
         """
+
         updateable = True
         status_effects_cache_directory = (
             f"{self._CACHE_DIRECTORY}{self._STATUS_EFFECTS_CACHE_FILE}"
@@ -634,6 +717,7 @@ class Responder:
         """
         Prepares the query headers
         """
+
         headers_file_dir = f"{self._DATA_DIRECTORY}/{self._HEADERS_FILE}"
 
         with open(headers_file_dir, "r") as headers_file:
@@ -666,8 +750,6 @@ class Responder:
     ):
         """
         Internal function to query the wiki and return the wikitext
-        TODO: Check if this actually works for every page of interest
-        TESTED TO WORK: Doll data, Doll skills, Weapons page
         """
 
         if not force:
@@ -720,6 +802,7 @@ class Responder:
         """
         Internal function to send a query
         """
+
         self.log.info(f"RESPONDER: Querying {query_url}")
 
         req = requests.Request("GET", query_url)
@@ -748,6 +831,7 @@ class Responder:
 
         Expects a JSON payload
         """
+
         with open(filename, "w", encoding="utf8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=4)
 
@@ -755,6 +839,7 @@ class Responder:
         """
         Internal function to update the local cache
         """
+
         self.log.info(f"RESPONDER: Updating {file_directory}.")
 
         file_content[self._FETCHED_STRING] = datetime.now(timezone.utc).strftime(

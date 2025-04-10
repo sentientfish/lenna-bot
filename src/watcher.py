@@ -47,9 +47,11 @@ class Watcher:
         self.intents = discord.Intents.default()
         self.intents.message_content = True
         self.bot = commands.Bot(command_prefix=cmd_prefix, intents=self.intents)
+        self.bot.remove_command("help")  # removes default help command
 
         self.bot.event(self._on_ready)
 
+        self._add_command("help", Watcher.help)
         self._add_command("bingo", Watcher.bingo)
         self._add_command("echo", Watcher.echo)
         self._add_command("doll", Watcher.doll)
@@ -62,24 +64,38 @@ class Watcher:
         self._add_command("fweapon", Watcher.fweapon)
         self._add_command("define", Watcher.define)
 
+    async def _on_ready(self):
+        self.log.info(f"WATCHER: Lenna logged in as user: {self.bot.user}")
+
+    def run(self):
+        """
+        Runs the bot inside Watcher
+        """
+
+        self.bot.run(self.token)
+
     def close(self):
+        """
+        Closes the bot
+        """
+
         self.log.info("WATCHER: Shutting down")
         self.responder.close()
 
-    def _add_command(self, name, func):
+    async def help(self, ctx):
         """
-        Helper function to add the command to the bot
-        taken from https://stackoverflow.com/questions/75674926/how-do-i-add-commands-to-a-class-discord-py
+        Help function to show what commands LennaBot can handle
         """
-        self.bot.command(name=name)(wraps(func)(partial(func, self)))
 
-    async def _on_ready(self):
-        self.log.info(f"WATCHER: Lenna logged in as user: {self.bot.user}")
+        embed = self.help_embed()
+
+        await ctx.send(embed=embed)
 
     async def bingo(self, ctx):
         """
         Bingo! uwu
         """
+
         coinflip = random.randint(0, 1)
         if coinflip:
             bingo_video = self.responder.get_media(LENNA_BINGO_VIDEO)
@@ -92,6 +108,7 @@ class Watcher:
         """
         Cutely echoes the message
         """
+
         text = " ".join(args)
 
         await ctx.send(text)
@@ -100,6 +117,7 @@ class Watcher:
         """
         Looks up doll information
         """
+
         embed = self._doll_lookup(doll_name, force=False)
 
         await ctx.send(embed=embed)
@@ -108,6 +126,7 @@ class Watcher:
         """
         For debugging, forces cache lookup
         """
+
         embed = self._doll_lookup(doll_name, force=False, use_cache=True)
 
         await ctx.send(embed=embed)
@@ -116,6 +135,7 @@ class Watcher:
         """
         Looks up doll information, forces query to wiki
         """
+
         if self.allowed(ctx):
             embed = self._doll_lookup(doll_name, force=True)
         else:
@@ -127,6 +147,7 @@ class Watcher:
         """
         Looks up doll information and returns only the keys
         """
+
         embed = self._doll_lookup(
             doll_name, with_doll=False, with_keys=True, force=False
         )
@@ -137,6 +158,7 @@ class Watcher:
         """
         Looks up doll information and returns only the keys
         """
+
         if self.allowed(ctx):
             embed = self._doll_lookup(
                 doll_name, with_doll=False, with_keys=True, force=False
@@ -150,6 +172,7 @@ class Watcher:
         """
         Looks up weapon information
         """
+
         weapon_name = " ".join(args)
         embed = self._weapon_lookup(weapon_name)
 
@@ -159,6 +182,7 @@ class Watcher:
         """
         For debugging, forces cache lookup
         """
+
         weapon_name = " ".join(args)
         embed = self._weapon_lookup(weapon_name, use_cache=True)
 
@@ -168,6 +192,7 @@ class Watcher:
         """
         Looks up doll information, forces query to wiki
         """
+
         if self.allowed(ctx):
             weapon_name = " ".join(args)
             embed = self._weapon_lookup(weapon_name, force=True, use_cache=True)
@@ -203,6 +228,7 @@ class Watcher:
         """
         Creates an embed to show that command is not allowed by user privilege
         """
+
         unallowed_msg = f"""
             Sorry, Shikikan, but looks like you do not have enough clearance!
             If you think this is an error, please ping @aguren!!!
@@ -216,18 +242,28 @@ class Watcher:
 
         return embed
 
-    def run(self):
+    def _add_command(self, name, func):
         """
-        Runs the bot inside Watcher
+        Helper function to add the command to the bot
+        taken from https://stackoverflow.com/questions/75674926/how-do-i-add-commands-to-a-class-discord-py
         """
-        self.bot.run(self.token)
+
+        self.bot.command(name=name)(wraps(func)(partial(func, self)))
+
+    def help_embed(self):
+        """
+        Fetches help embed
+        """
+
+        return self.responder.get_help_embed()
 
     def _doll_lookup(
         self, doll_name, with_doll=True, with_keys=False, force=False, use_cache=False
     ):
         """
-        Looks up doll information
+        Internal function to look up doll information
         """
+
         embed = None
         try:
             fixed_doll_name = self._fix_name(doll_name)
@@ -260,6 +296,10 @@ class Watcher:
         return embed
 
     def _weapon_lookup(self, weapon_name, force=False, use_cache=False):
+        """
+        Internal function to look up weapon information
+        """
+
         embed = None
         try:
             fixed_weapon_name = self._fix_name(weapon_name)
@@ -290,6 +330,10 @@ class Watcher:
         return embed
 
     def _status_effect_lookup(self, status_effect_name, force=False, use_cache=False):
+        """
+        Internal function to look up status effect
+        """
+
         embed = None
         try:
             fixed_status_effect_name = self._fix_name(status_effect_name)
@@ -332,6 +376,7 @@ class Watcher:
 
         thank you @jiggles8675!
         """
+
         return re.sub(r"[A-Za-z]+([A-Za-z]+)?", lambda i: i.group(0).capitalize(), name)
 
     def _capitalize_roman_numerals(self, string):
@@ -342,5 +387,4 @@ class Watcher:
         """
 
         roman_numeral_regex = r"\b[MCDXLIVmcdxliv]+\b"
-
         return re.sub(roman_numeral_regex, lambda i: i.group(0).upper(), string)
