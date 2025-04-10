@@ -52,6 +52,7 @@ def remove_wikilinks(wikitext):
     Internal function to simplify wikilinks in wikitext
     Shortens the wikilink into its template value
     """
+
     wikilinks = wtp.parse(wikitext).wikilinks
 
     for wikilink in wikilinks:
@@ -69,6 +70,7 @@ def remove_templates(wikitext):
     Internal function to simplify templates in wikitext
     Shortens the template into its value
     """
+
     templates = wtp.parse(wikitext).templates
 
     for template in templates:
@@ -88,6 +90,7 @@ def simplify(wikitext):
     Internal function to simply the wikitext and remove all templates
     and wikilinks
     """
+
     wikitext = remove_wikilinks(wikitext)
     wikitext = remove_templates(wikitext)
 
@@ -98,6 +101,7 @@ def table_data_to_dict(table_data):
     """
     Internal function to convert wikitable data into a dictionary
     """
+
     table_dictionary = {}
     for data in table_data:
         key = data[KEY_INDEX]

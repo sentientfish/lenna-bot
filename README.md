@@ -18,19 +18,20 @@ Please remain respectful of this, so we may all continue using information provi
 ## Commands
 Currently, Lenna will listen for the following commands:
 
-| *No.* | *Command*                         | *Description*                                                                         |
-| ----- | --------------------------------- | ------------------------------------------------------------------------------------- |
-| 01    | !bingo                            | Lenna will send her bingo video                                                       |
-| 02    | !echo                             | Lenna will repeat what Shikikan says (very uwu) !!!                                   |
-| 03    | !doll <doll_name>                 | Lenna will post doll information as an embed                                          |
-| 04    | !mdoll <doll_name>                | Lenna will post doll information as an embed, forcefully using cache                  |
-| 05    | !fdoll <doll_name>                | Lenna will post doll information as an embed, forcefully quering wiki                 |
-| 06    | !keys <doll_name>                 | Lenna will post doll's neural keys information as an embed                            |
-| 07    | !fkeys <doll_name>                | Lenna will post doll's neural keys information as an embed, forcefully quering wiki   |
-| 08    | !weapon <weapon_name>             | Lenna will post weapon information as an embed                                        |
-| 09    | !mweapon <weapon_name>            | Lenna will post weapon information as an embed, forcefully using cache                |
-| 10    | !fweapon <weapon_name>            | Lenna will post weapon information as an embed, forcefully quering wiki               |
-| 11    | !define <status_effect_name>      | Lenna will post status effect information as an embed                                 |
+| *No.* | *Command*                         | *Description*                                                                                                 |
+| ----- | --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 01    | !help                             | Help function to show what commands are available                                                             |
+| 01    | !bingo                            | (Pseudo-)Randomly sends Lenna's or Leva's bingo video! very cute!!!                                           |
+| 02    | !echo                             | Lenna will repeat what Shikikan says!                                                                         |
+| 03    | !doll <doll_name>                 | Looks up doll information given a doll name and posts it as an embed                                          |
+| 04    | !mdoll <doll_name>                | Looks up doll information given a doll name and posts it as an embed, forcefully using cache                  |
+| 05    | !fdoll <doll_name>                | Looks up doll information given a doll name and posts it as an embed, forcefully quering wiki                 |
+| 06    | !keys <doll_name>                 | Looks up a doll's neural key information given a doll name and posts it as an embed                           |
+| 07    | !fkeys <doll_name>                | Looks up a doll's neural key information given a doll name and posts it as an embed, forcefully quering wiki  |
+| 08    | !weapon <weapon_name>             | Looks up weapon information given a weapon name and posts it as an embed                                      |
+| 09    | !mweapon <weapon_name>            | Looks up weapon information given a weapon name and posts it as an embed, forcefully using cache              |
+| 10    | !fweapon <weapon_name>            | Looks up weapon information given a weapon name and posts it as an embed, forcefully quering wiki             |
+| 11    | !define <status_effect_name>      | Looks up status effect information given a status effect name and posts it as an embed                        |
 
 ### Examples
 `!bingo`

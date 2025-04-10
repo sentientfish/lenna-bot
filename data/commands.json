@@ -1,0 +1,49 @@
+{
+    "help": {
+        "helpstring": "Help function to show what commands are available",
+        "args": {
+            "command_name (optional)": "Command name to look up for in particular"
+        },
+        "example": "!help weapon"
+    },
+    "bingo": {
+        "helpstring": "(Pseudo-)Randomly sends Lenna's or Leva's bingo video! very cute!!!",
+        "args": {},
+        "example": "!bingo"
+    },
+    "echo": {
+        "helpstring": "Lenna will repeat what Shikikan says!",
+        "args": {
+            "*args": "Words to be repeated by Lenna"
+        },
+        "example": "!echo this and that" 
+    },
+    "doll": {
+        "helpstring": "Looks up doll information given a doll name and posts it as an embed",
+        "args": {
+            "doll_name": "Name of the doll to search"
+        },
+        "example": "!doll makiatto"
+    },
+    "keys": {
+        "helpstring": "Looks up a doll's neural key information given a doll name and posts it as an embed",
+        "args": {
+            "doll_name": "Name of the doll to search"
+        },
+        "example": "!keys makiatto"
+    },
+    "weapon": {
+        "helpstring": "Looks up weapon information given a weapon name and posts it as an embed",
+        "args": {
+            "weapon_name": "Name of the weapon to search"
+        },
+        "example": "!weapon bittersweet caramel"
+    },
+    "define": {
+        "helpstring": "Looks up status effect information given a status effect name and posts it as an embed",
+        "args": {
+            "status_effect_name": "Name of the status effect to search"
+        },
+        "example": "!define acid corrosion ii"
+    }
+}

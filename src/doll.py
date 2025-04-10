@@ -116,6 +116,7 @@ class Doll:
         """
         Internal function to get node from wikitext template
         """
+
         name = None
         if is_key:
             name_string = f"Node{node_position}name"

@@ -61,6 +61,7 @@ class Weapons:
         """
         Function to get a Weapon by weapon_name
         """
+
         return self.weapons.get(weapon_name, None)
 
     def _parse_weapons_wikitable(self, weapons_tables_json):
@@ -68,6 +69,7 @@ class Weapons:
         Parses weapons table into a dictionary of weapon name to Weapon object
         returns said dictionary
         """
+
         weapons_tables = wtp.parse(weapons_tables_json).tables
 
         # First, map WeaponType enums to a dictionary of weapons of that type.
