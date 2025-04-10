@@ -42,7 +42,7 @@ class Watcher:
         self.log = log
         self.token = token
         self.cmd_prefix = cmd_prefix
-        self.responder = Responder(self.log)
+        self.responder = Responder(self.log, cmd_prefix)
 
         self.intents = discord.Intents.default()
         self.intents.message_content = True
@@ -82,12 +82,13 @@ class Watcher:
         self.log.info("WATCHER: Shutting down")
         self.responder.close()
 
-    async def help(self, ctx):
+    async def help(self, ctx, *args):
         """
         Help function to show what commands LennaBot can handle
         """
 
-        embed = self.help_embed()
+        command = " ".join(args).strip()
+        embed = self.help_embed(command_name=command)
 
         await ctx.send(embed=embed)
 
@@ -250,12 +251,12 @@ class Watcher:
 
         self.bot.command(name=name)(wraps(func)(partial(func, self)))
 
-    def help_embed(self):
+    def help_embed(self, command_name=None):
         """
         Fetches help embed
         """
 
-        return self.responder.get_help_embed()
+        return self.responder.get_help_embed(command_name=command_name)
 
     def _doll_lookup(
         self, doll_name, with_doll=True, with_keys=False, force=False, use_cache=False

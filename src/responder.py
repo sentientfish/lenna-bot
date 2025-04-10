@@ -150,10 +150,14 @@ class Responder:
     _CACHE_DIRECTORY = f"{_DATA_DIRECTORY}/cache/"
     _HEADERS_FILE = "headers.json"
     _MEDIA_FILE = "media.json"
+    _COMMANDS_FILE = "commands.json"
     _WEAPONS_CACHE_FILE = "weapons.json"
     _STATUS_EFFECTS_CACHE_FILE = "status_effects.json"
     _FETCHED_STRING = "fetched"
     _UPDATEABLE_STRING = "updateable"
+    _COMMAND_HELPSTRING = "helpstring"
+    _COMMAND_ARGS = "args"
+    _COMMAND_EXAMPLE = "example"
 
     # Parsing variables
     _DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -177,9 +181,10 @@ class Responder:
     _STAR_EMOJI_STRING = ":star:"
     _ARROW_EMOJI_STRING = ":arrow_up_small:"
 
-    def __init__(self, log):
+    def __init__(self, log, cmd_prefix):
         self.media_dict = self._load_media()
         self.log = log
+        self.cmd_prefix = cmd_prefix
         self.weapons = None
         self.status_effects = None
         self.session = requests.Session()
@@ -203,84 +208,53 @@ class Responder:
 
         return media_link
 
-    def get_help_embed(self):
+    def get_help_embed(self, command_name=""):
         """
         Function to prepare a help embed
         """
 
         embed = Embed(
             title="Available Commands",
-            description=f"",
+            description=f"Command prefix: {self.cmd_prefix}",
             color=Color.orange(),
         )
 
-        embed.add_field(
-            name="!bingo",
-            value=f"(Pseudo-)Randomly sends Lenna's or Leva's bingo video! very cute!!!",
-            inline=False,
-        )
+        with open(f"{self._DATA_DIRECTORY}/{self._COMMANDS_FILE}", "r") as cmd_file:
+            cmd_json = json.load(cmd_file)
 
-        embed.add_field(
-            name="!echo",
-            value=f"Lenna will repeat what Shikikan says!",
-            inline=False,
-        )
+            if command_name != "":
+                command_fields = cmd_json[command_name]
+                self.get_command_help_embed(
+                    command_fields, command_name, embed, single_command=True
+                )
+            else:
+                for command in cmd_json:
+                    command_fields = cmd_json[command]
 
-        embed.add_field(
-            name="!doll <doll_name>",
-            value=f"Looks up doll information corresponding to doll_name\nexample: `!doll makiatto`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!mdoll <doll_name>",
-            value=f"Looks up doll information corresponding to doll_name using cache\nexample: `!mdoll makiatto`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!fdoll <doll_name>",
-            value=f"Looks up doll information corresponding to doll_name by forcefully querying the wiki. Requires admin roles\nexample: `!fdoll makiatto`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!keys <doll_name>",
-            value=f"Looks up doll neural keys information corresponding to doll_name\nexample: `!keys makiatto`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!fkeys <doll_name>",
-            value=f"Looks up doll neural keys information corresponding to doll_name by forcefully querying the wiki. Requires admin roles\nexample: `!fkeys makiatto`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!weapon <weapon_name>",
-            value=f"Looks up weapon information corresponding to weapon_name\nexample: `!weapon bittersweet caramel`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!mweapon <weapon_name>",
-            value=f"Looks up weapon information corresponding to weapon_name using cache\nexample: `!mweapon bittersweet caramel`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!fweapon <weapon_name>",
-            value=f"Looks up weapon information corresponding to weapon_name by forcefully querying the wiki. Requires admin roles\nexample: `!fweapon bittersweet caramel`",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!define <status_effect_name>",
-            value=f"Looks up status effect information corresponding to status_effect_name\nexample: `!define acid corrosion ii`",
-            inline=False,
-        )
+                    self.get_command_help_embed(command_fields, command, embed)
 
         return embed
+
+    def get_command_help_embed(self, cmd_dict, command, embed, single_command=False):
+        """
+        Function to prepare a specific command's help embed
+        """
+
+        embed_field_value = f"{cmd_dict[self._COMMAND_HELPSTRING]}\n"
+        args = cmd_dict[self._COMMAND_ARGS]
+
+        if len(args) > 0:
+            embed_field_value += "args:\n"
+            for arg in args:
+                embed_field_value += f"{arg}: {args[arg]}\n"
+
+        embed_field_value += f"\nExample: `{cmd_dict[self._COMMAND_EXAMPLE]}`\n"
+
+        if not single_command:
+            embed.add_field(name=command, value=embed_field_value, inline=False)
+        else:
+            embed.title = command
+            embed.description = embed_field_value
 
     def get_doll(
         self, doll_name, with_doll=True, with_keys=False, use_cache=False, force=False
