@@ -99,15 +99,12 @@ class Doll:
         self.full_name = get_template_param_value(template, "fullname")
         self.role = get_template_param_value(template, "role")
         self.rarity = get_template_param_value(template, "rarity")
-        self.affiliation = get_template_param_value(template, "affiliation")
+        self.affiliation = simplify(get_template_param_value(template, "affiliation"))
         self.weapon_name = get_template_param_value(template, "favweapon")
         self.weapon_weakness = get_template_param_value(template, "wepweakness")
         self.phase_weakness = get_template_param_value(template, "phaseweakness")
         self.gfl_name = get_template_param_value(template, "GFL")
-
-        self.signature_weapon = None
-        if self._STANDARD_RARITY not in self.rarity:
-            self.signature_weapon = get_template_param_value(template, "imprint")
+        self.signature_weapon = get_template_param_value(template, "imprint")
 
         self.nodes = self._get_nodes(template)
         self.skills = self._get_skills(doll_skills)
@@ -166,7 +163,6 @@ class Doll:
 
         skills = []
         for skill_data in doll_skills:
-
             skill = self._parse_skill_table(skill_data)
             skills.append(skill)
 
