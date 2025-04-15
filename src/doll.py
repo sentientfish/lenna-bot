@@ -146,6 +146,10 @@ class Doll:
             ):
                 key_position = i
                 if important_node == self._UNIVERSAL_KEY_NODE:
+                    # We want to avoid parsing the universal key twice
+                    if i == self._KEY_POSITION_END_RANGE - 1:
+                        continue
+
                     key_position = self._INVALID_KEY_POSITION
 
                 node = self._get_node(
