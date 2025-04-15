@@ -44,7 +44,9 @@ def get_template_param_value(template, param_name):
     Internal function to get the value of a parameter
     """
 
-    return template.get_arg(param_name).value
+    param = template.get_arg(param_name)
+
+    return param.value if param is not None else None
 
 
 def remove_wikilinks(wikitext):
@@ -56,11 +58,14 @@ def remove_wikilinks(wikitext):
     wikilinks = wtp.parse(wikitext).wikilinks
 
     for wikilink in wikilinks:
+        value = None
         if wikilink.text == None:
-            continue
+            value = wikilink.title
+        else:
+            value = wikilink.text
 
         wikilink_str = str(wikilink)
-        wikitext = wikitext.replace(wikilink_str, wikilink.text)
+        wikitext = wikitext.replace(wikilink_str, value)
 
     return wikitext
 

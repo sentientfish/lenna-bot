@@ -329,7 +329,7 @@ class Responder:
 
         embed = Embed(
             title=doll.full_name,
-            description=f"{doll.gfl_name}",
+            description=f"{doll.gfl_name if doll.gfl_name is not None else ""}",
             color=Color.orange(),
         )
 
@@ -337,8 +337,8 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                !!!\nShikikan, Lenna failed to fetch data for this doll, but Lenna remembers them! Make sure to check the data out and see what Lenna missed!\n!!!",
-                """
+                    !!!\nShikikan, Lenna failed to fetch data for this doll, but Lenna remembers them! Make sure to check the data out and see what Lenna missed!\n!!!"
+                    """
                 )
             )
 
@@ -492,7 +492,7 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                !!!\nShikikan, Lenna failed to fetch data for this weapon, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!",
+                !!!\nShikikan, Lenna failed to fetch data for this weapon, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!"
                 """
                 )
             )
@@ -589,7 +589,7 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                !!!\nShikikan, Lenna failed to fetch data for this status effect, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!",
+                !!!\nShikikan, Lenna failed to fetch data for this status effect, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!"
                 """
                 )
             )
