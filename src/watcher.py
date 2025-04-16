@@ -17,6 +17,7 @@ from responder import Responder
 
 LENNA_BINGO_VIDEO = "lenna_bingo_video"
 LEVA_BINGO_VIDEO = "leva_bingo_video"
+JUST_PULL_GIF = "silver_wolf_pull_gif"
 ADMIN_ROLES_FILE = "../data/admin.txt"
 
 
@@ -53,6 +54,7 @@ class Watcher:
 
         self._add_command("help", Watcher.help)
         self._add_command("bingo", Watcher.bingo)
+        self._add_command("just_pull", Watcher.just_pull)
         self._add_command("echo", Watcher.echo)
         self._add_command("doll", Watcher.doll)
         self._add_command("mdoll", Watcher.mdoll)
@@ -104,6 +106,16 @@ class Watcher:
             bingo_video = self.responder.get_media(LEVA_BINGO_VIDEO)
 
         await ctx.send(bingo_video)
+
+    async def just_pull(self, ctx):
+        """
+        What r u even talkin abt
+        Don't ask
+        Don't hesitate
+        Just pull
+        """
+
+        await ctx.send(self.responder.get_media(JUST_PULL_GIF))
 
     async def echo(self, ctx, *args):
         """
