@@ -17,6 +17,10 @@ from typing import TypedDict
 
 from doll import Doll
 from weapons import Weapons
+from special_names import (
+    SPECIAL_DOLL_NAMES,
+    SPECIAL_WEAPON_NAMES,
+)
 from status_effects import StatusEffects
 from parse_utils import (
     get_wikitext,
@@ -27,18 +31,6 @@ IOPWIKI_DATA_FETCH_PARAM = "?action=parse&prop=wikitext&format=json&redirects=1&
 IOPWIKI_INFO_FETCH_PARAM = "?action=query&format=json&prop=info&titles="
 IOPWIKI_WEAPONS_PAGE = "GFL2_Weapons"
 IOPWIKI_STATUS_EFFECTS_PAGE = "GFL2_Status_Effects"
-
-SPECIAL_NAMES = {
-    "Centaureissi": "Centaureissi_(GFL2)",
-    "Daiyan": "Daiyan_(GFL2)",
-    "Dushevnaya": "Dushevnaya_(GFL2)",
-    "Jiangyu": "Jiangyu_(GFL2)",
-    "Mosin-Nagant": "Mosin-Nagant_(GFL2)",
-    "Springfield": "Springfield_(GFL2)",
-    "Suomi": "Suomi_(GFL2)",
-    "Vector": "Vector_(GFL2)",
-    "Ksenia": "Ksenia_(GFL2)",
-}
 
 
 class InvalidMediaException(Exception):
@@ -337,7 +329,7 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                    !!!\nShikikan, Lenna failed to fetch data for this doll, but Lenna remembers them! Make sure to check the data out and see what Lenna missed!\n!!!"
+                    !!!\nShikikan, Lenna failed to fetch data for this doll, but Lenna remembers them! Make sure to check the data out and see what Lenna missed!\n!!!
                     """
                 )
             )
@@ -428,6 +420,7 @@ class Responder:
         """
 
         updateable = True
+        weapon_name = SPECIAL_WEAPON_NAMES.get(weapon_name, weapon_name)
         weapons_cache_directory = f"{self._CACHE_DIRECTORY}{self._WEAPONS_CACHE_FILE}"
         weapons_query_url = (
             f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{IOPWIKI_WEAPONS_PAGE}"
@@ -492,7 +485,7 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                !!!\nShikikan, Lenna failed to fetch data for this weapon, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!"
+                !!!\nShikikan, Lenna failed to fetch data for this weapon, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!
                 """
                 )
             )
@@ -589,7 +582,7 @@ class Responder:
             embed.set_footer(
                 text=dedent(
                     """
-                !!!\nShikikan, Lenna failed to fetch data for this status effect, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!"
+                !!!\nShikikan, Lenna failed to fetch data for this status effect, but Lenna remembers it! Make sure to check the data out and see what Lenna missed!\n!!!
                 """
                 )
             )
@@ -633,7 +626,7 @@ class Responder:
 
         doll_file_directory = f"{self._CACHE_DIRECTORY}{doll_name.lower()}.json"
 
-        doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
+        doll_name = SPECIAL_DOLL_NAMES.get(doll_name, doll_name)
         query_url = f"{IOPWIKI_API_URL}{IOPWIKI_DATA_FETCH_PARAM}{doll_name}"
 
         raw_doll_data, update, updateable = self._query_wiki(
@@ -658,7 +651,7 @@ class Responder:
         raw_skill_list = []
         update_list = []
         skill_directories = []
-        query_doll_name = SPECIAL_NAMES.get(doll_name, doll_name)
+        query_doll_name = SPECIAL_DOLL_NAMES.get(doll_name, doll_name)
         updateable = True
         for i in range(self._SKILL_START_RANGE, self._SKILL_END_RANGE):
             skill_index = "" if i == 1 else i
