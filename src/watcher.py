@@ -303,7 +303,7 @@ class Watcher:
 
         embed = None
         try:
-            fixed_weapon_name = self._fix_name(weapon_name)
+            fixed_weapon_name = weapon_name.lower()
             embed = self.responder.get_weapon(
                 fixed_weapon_name,
                 force=force,

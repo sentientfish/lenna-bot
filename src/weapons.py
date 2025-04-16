@@ -9,6 +9,7 @@ from enum import Enum
 import wikitextparser as wtp
 
 from parse_utils import (
+    cleanup_string,
     simplify,
     table_data_to_dict,
 )
@@ -37,11 +38,13 @@ class Weapons:
     Weapons class definition
     """
 
+    # Parsing vars
     _WEAPON_GRADE_INDEX = 0
     _WEAPON_DESCRIPTION_INDEX = 2
     _WEAPON_SKILL_INDEX = 3
     _WEAPON_TRAIT_INDEX = 4
     _WEAPON_IMPRINT_INDEX = 5
+    _WEAPON_DATA_START_INDEX = 2
 
     class WeaponType(Enum):
         HG = 0
@@ -51,8 +54,6 @@ class Weapons:
         MG = 4
         SG = 5
         BLADE = 6
-
-    _WEAPON_DATA_START_INDEX = 2
 
     def __init__(self, weapons_json):
         self.weapons = self._parse_weapons_wikitable(weapons_json)
@@ -103,9 +104,13 @@ class Weapons:
 
             for weapon_name in weapons_dict:
                 weapon_info = weapons_dict[weapon_name]
+
+                # Prune and lowercase weapon names to make them easier to key through
+                pruned_weapon_name = cleanup_string(weapon_name).lower()
+
                 weapon = Weapon(
                     weapon_type.name,
-                    weapon_name,
+                    cleanup_string(weapon_name),
                     simplify(weapon_info[self._WEAPON_GRADE_INDEX]),
                     simplify(weapon_info[self._WEAPON_DESCRIPTION_INDEX]),
                     simplify(weapon_info[self._WEAPON_SKILL_INDEX]),
@@ -113,6 +118,6 @@ class Weapons:
                     simplify(weapon_info[self._WEAPON_IMPRINT_INDEX]),
                 )
 
-                weapons_dictionary[weapon_name] = weapon
+                weapons_dictionary[pruned_weapon_name] = weapon
 
         return weapons_dictionary

@@ -21,6 +21,12 @@ KEY_INDEX = 0
 FIRST_VALUE_INDEX = 1
 SIMPLE_DATA_LIST_LENGTH = 2
 
+# Cleanup
+BREAK_STR = "<br>"
+SPACE_STR = " "
+SINGLE_QUOTES_STR = "'"
+EMPTY_STR = ""
+
 
 def get_wikitext(json_obj):
     """
@@ -100,6 +106,13 @@ def simplify(wikitext):
     wikitext = remove_templates(wikitext)
 
     return wikitext
+
+
+def cleanup_string(string):
+    clean_string = string.replace(BREAK_STR, SPACE_STR)
+    clean_string = clean_string.replace(SINGLE_QUOTES_STR, EMPTY_STR)
+
+    return clean_string
 
 
 def table_data_to_dict(table_data):
